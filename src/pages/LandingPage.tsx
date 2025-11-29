@@ -11,7 +11,7 @@ const LandingPage = () => {
 
   const handleEntrar = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/app/comercial");
+    navigate("/app");
   };
 
   return (
