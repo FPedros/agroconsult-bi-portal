@@ -3,7 +3,7 @@ const FinanceiroPage = () => {
     <div className="space-y-4">
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-2">
-          Painel Financeiro – Agroconsult
+          Painel Financeiro 
         </h1>
         <p className="text-muted-foreground">
           Visão financeira, margens, custos e KPIs de gestão.

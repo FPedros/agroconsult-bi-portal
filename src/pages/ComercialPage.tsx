@@ -3,7 +3,7 @@ const ComercialPage = () => {
     <div className="space-y-4">
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-2">
-          Painel Comercial – Agroconsult
+          Painel Comercial 
         </h1>
         <p className="text-muted-foreground">
           Espaço para dashboards de inteligência de mercado e performance comercial.

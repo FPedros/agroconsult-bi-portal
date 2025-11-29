@@ -28,8 +28,8 @@ const Sidebar = () => {
             <Leaf className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-sidebar-foreground">Agroconsult</h2>
-            <p className="text-xs text-muted-foreground">BI de Consultoria</p>
+            <h2 className="text-lg font-bold text-sidebar-foreground">Consultoria</h2>
+            <p className="text-xs text-muted-foreground">Inteligência de Mercado</p>
           </div>
         </div>
       </div>
@@ -55,7 +55,7 @@ const Sidebar = () => {
 
       <div className="p-4 border-t border-sidebar-border">
         <p className="text-xs text-center text-muted-foreground">
-          © 2024 Agroconsult
+          © Agroconsult
         </p>
       </div>
     </aside>

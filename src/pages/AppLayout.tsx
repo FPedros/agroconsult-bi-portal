@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import UserMenu from "@/components/UserMenu";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const AppLayout = () => {
   const location = useLocation();
@@ -9,7 +10,10 @@ const AppLayout = () => {
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
       <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-end px-6">
-        <UserMenu />
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <UserMenu />
+        </div>
       </header>
       <div className="flex flex-1 w-full">
         <Sidebar />

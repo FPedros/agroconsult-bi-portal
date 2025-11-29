@@ -19,7 +19,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>({
     firstName: "Fernando",
     lastName: "Sousa",
-    email: "fernando.sousa@agroconsult.com",
+    email: "fernandosousa@agroconsult.com",
   });
 
   const logout = () => {
