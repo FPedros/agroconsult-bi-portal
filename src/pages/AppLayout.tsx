@@ -22,10 +22,10 @@ const AppLayout = () => {
             <div className="flex items-center justify-center h-full">
               <div className="text-center max-w-2xl">
                 <h1 className="text-3xl font-bold text-foreground mb-4">
-                  Bem-vindo ao Portal Agroconsult
+                  Bem-vindo ao Portal Consultoria
                 </h1>
                 <p className="text-muted-foreground text-lg">
-                  Selecione um painel na lateral para visualizar os dashboards Agroconsult.
+                  Selecione um painel na lateral para visualizar os dashboards da Consultoria.
                 </p>
               </div>
             </div>
