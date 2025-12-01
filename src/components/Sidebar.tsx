@@ -1,5 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { BarChart3, TrendingUp, DollarSign, Leaf } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const menuItems = [
   {
@@ -22,17 +23,17 @@ const menuItems = [
 const Sidebar = () => {
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <div className="p-6 border-b border-sidebar-border">
+      <Link to="/app" className="p-6 border-b border-sidebar-border block">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Leaf className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h2 className="text-lg font-bold text-sidebar-foreground">Consultoria</h2>
-            <p className="text-xs text-muted-foreground">Inteligência de Mercado</p>
+            <p className="text-xs text-muted-foreground">Inteligencia de Mercado</p>
           </div>
         </div>
-      </div>
+      </Link>
 
       <nav className="flex-1 p-4">
         <div className="space-y-2">
@@ -54,9 +55,7 @@ const Sidebar = () => {
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">
-        <p className="text-xs text-center text-muted-foreground">
-          © Agroconsult
-        </p>
+        <p className="text-xs text-center text-muted-foreground">Agroconsult</p>
       </div>
     </aside>
   );
