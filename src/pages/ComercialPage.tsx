@@ -12,10 +12,10 @@ const ComercialPage = () => {
 
       <div className="mt-4 w-full aspect-[16/9] rounded-xl border border-border overflow-hidden bg-card shadow-lg">
         <iframe
-          src="about:blank"
+          src="https://app.powerbi.com/view?r=eyJrIjoiOGY5OThmNWQtYTExMS00MGMzLWIyMzEtZGUyZjRkODM5MzU3IiwidCI6IjRmYWUwODcwLTIwYWEtNGNhMy1iMzE2LTM0N2E1N2IyZWQxMCJ9"
           className="w-full h-full"
-          title="Dashboard Comercial Agroconsult"
-          // Substitua o src deste iframe pelo link do BI Comercial Agroconsult
+          title="Agrovalora_Dashboard_vf"
+          allowFullScreen
         />
       </div>
     </div>
