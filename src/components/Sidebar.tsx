@@ -1,6 +1,10 @@
+import { useState } from "react";
 import { NavLink } from "@/components/NavLink";
-import { BarChart3, TrendingUp, DollarSign, Leaf } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Leaf, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import UserMenu from "@/components/UserMenu";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const menuItems = [
   {
@@ -21,21 +25,45 @@ const menuItems = [
 ];
 
 const Sidebar = () => {
-  return (
-    <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      <Link to="/app" className="p-6 border-b border-sidebar-border block">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Leaf className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-sidebar-foreground">Consultoria</h2>
-            <p className="text-xs text-muted-foreground">Inteligencia de Mercado</p>
-          </div>
-        </div>
-      </Link>
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-      <nav className="flex-1 p-4">
+  return (
+    <aside
+      className={cn(
+        "bg-sidebar border-r border-sidebar-border flex flex-col transition-[width] duration-200 ease-in-out",
+        isCollapsed ? "w-20" : "w-64",
+      )}
+    >
+      <div className="flex items-center gap-3 border-b border-sidebar-border p-4">
+        <Link
+          to="/app"
+          className={cn(
+            "flex flex-1 items-center gap-3 text-sidebar-foreground transition-all duration-200",
+            isCollapsed && "justify-center",
+          )}
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Leaf className="h-6 w-6 text-primary" />
+          </div>
+          {!isCollapsed && (
+            <div className="leading-tight">
+              <h2 className="text-lg font-bold text-sidebar-foreground">Consultoria</h2>
+              <p className="text-xs text-muted-foreground">Inteligencia de Mercado</p>
+            </div>
+          )}
+        </Link>
+
+        <button
+          type="button"
+          onClick={() => setIsCollapsed((prev) => !prev)}
+          className="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-lg text-sidebar-foreground hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
+        >
+          {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+        </button>
+      </div>
+
+      <nav className={cn("flex-1 p-4", isCollapsed && "px-2")}>
         <div className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -43,19 +71,32 @@ const Sidebar = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200"
-                activeClassName="bg-sidebar-accent text-primary font-medium shadow-sm"
+                title={isCollapsed ? item.title : undefined}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-4 py-3 text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent",
+                  isCollapsed && "justify-center px-3",
+                )}
+                activeClassName={cn(
+                  "bg-sidebar-accent text-primary font-medium shadow-sm",
+                  isCollapsed && "text-primary",
+                )}
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm">{item.title}</span>
+                <Icon className="h-5 w-5" />
+                {!isCollapsed && <span className="text-sm">{item.title}</span>}
               </NavLink>
             );
           })}
         </div>
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border">
-        <p className="text-xs text-center text-muted-foreground">Agroconsult</p>
+      <div
+        className={cn(
+          "border-t border-sidebar-border p-4 flex flex-col gap-3",
+          isCollapsed ? "items-center" : "items-stretch",
+        )}
+      >
+        <ThemeToggle />
+        <UserMenu collapsed={isCollapsed} />
       </div>
     </aside>
   );

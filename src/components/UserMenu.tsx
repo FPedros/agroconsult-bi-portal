@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 import { User, Settings, KeyRound, LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +12,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-const UserMenu = () => {
+interface UserMenuProps {
+  collapsed?: boolean;
+}
+
+const UserMenu = ({ collapsed = false }: UserMenuProps) => {
   const { user, logout } = useUser();
   const navigate = useNavigate();
 
@@ -27,14 +32,20 @@ const UserMenu = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center gap-2 hover:bg-sidebar-accent"
+          className={cn(
+            "flex w-full items-center gap-2 px-2 hover:bg-sidebar-accent",
+            collapsed ? "justify-center" : "justify-start",
+          )}
+          aria-label={collapsed ? "Abrir menu do usuario" : undefined}
         >
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-            <User className="w-4 h-4 text-primary" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20">
+            <User className="h-4 w-4 text-primary" />
           </div>
-          <span className="text-sm font-medium text-foreground">
-            {user.firstName} {user.lastName}
-          </span>
+          {!collapsed && (
+            <span className="text-sm font-medium text-foreground">
+              {user.firstName} {user.lastName}
+            </span>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

@@ -1,25 +1,17 @@
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
-import UserMenu from "@/components/UserMenu";
-import ThemeToggle from "@/components/ThemeToggle";
 
 const AppLayout = () => {
   const location = useLocation();
   const isBasePath = location.pathname === "/app" || location.pathname === "/app/";
 
   return (
-    <div className="min-h-screen flex flex-col w-full bg-background">
-      <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-end px-6">
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <UserMenu />
-        </div>
-      </header>
-      <div className="flex flex-1 w-full">
-        <Sidebar />
-        <main className="flex-1 p-4 md:p-8 bg-background/40">
+    <div className="min-h-screen flex w-full bg-background">
+      <Sidebar />
+      <main className="flex-1 min-h-0 p-4 md:p-6 bg-background/40 overflow-hidden flex">
+        <div className="flex h-full w-full min-h-0">
           {isBasePath ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-full w-full">
               <div className="text-center max-w-2xl">
                 <h1 className="text-3xl font-bold text-foreground mb-4">
                   Bem-vindo ao Portal Consultoria
@@ -32,8 +24,8 @@ const AppLayout = () => {
           ) : (
             <Outlet />
           )}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };
