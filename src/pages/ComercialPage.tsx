@@ -12,9 +12,9 @@ const ComercialPage = () => {
 
       <div className="mt-4 w-full aspect-[16/9] rounded-xl border border-border overflow-hidden bg-card shadow-lg">
         <iframe
-          src="https://app.powerbi.com/view?r=eyJrIjoiOGY5OThmNWQtYTExMS00MGMzLWIyMzEtZGUyZjRkODM5MzU3IiwidCI6IjRmYWUwODcwLTIwYWEtNGNhMy1iMzE2LTM0N2E1N2IyZWQxMCJ9"
+          src="https://app.powerbi.com/view?r=eyJrIjoiMDhjMTEwMTUtODIwZS00MTcxLWEwM2QtNDMxNmRiYTczM2FlIiwidCI6IjRmYWUwODcwLTIwYWEtNGNhMy1iMzE2LTM0N2E1N2IyZWQxMCJ9"
           className="w-full h-full"
-          title="Agrovalora_Dashboard_vf"
+          title="Processos_Consultoria_novo"
           allowFullScreen
         />
       </div>
