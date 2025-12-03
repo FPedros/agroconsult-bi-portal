@@ -9,9 +9,12 @@ import AppLayout from "./pages/AppLayout";
 import ComercialPage from "./pages/ComercialPage";
 import OperacionalPage from "./pages/OperacionalPage";
 import FinanceiroPage from "./pages/FinanceiroPage";
+import AvaliacaoAtivosPage from "./pages/AvaliacaoAtivosPage";
+import ConsultoriaFinanceiroPage from "./pages/ConsultoriaFinanceiroPage";
 import PerfilPage from "./pages/PerfilPage";
 import RecuperarSenhaPage from "./pages/RecuperarSenhaPage";
 import NotFound from "./pages/NotFound";
+import SectorPage from "./pages/SectorPage";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +31,10 @@ const App = () => (
             <Route path="/app" element={<AppLayout />}>
               <Route path="comercial" element={<ComercialPage />} />
               <Route path="operacional" element={<OperacionalPage />} />
+              <Route path="consultoria/financeiro" element={<ConsultoriaFinanceiroPage />} />
               <Route path="financeiro" element={<FinanceiroPage />} />
+              <Route path="setor/avaliacao-ativos" element={<AvaliacaoAtivosPage />} />
+              <Route path="setor/:sectorId" element={<SectorPage />} />
               <Route path="perfil" element={<PerfilPage />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

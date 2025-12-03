@@ -24,10 +24,15 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const inApp = window.location.pathname.startsWith("/app");
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
-    root.classList.add(theme);
-    window.localStorage.setItem(STORAGE_KEY, theme);
+    const appliedTheme = inApp ? theme : "dark"; // Keep login/public pages dark; apply user theme only inside /app.
+    root.classList.add(appliedTheme);
+    if (inApp) {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    }
   }, [theme]);
 
   const value = useMemo(

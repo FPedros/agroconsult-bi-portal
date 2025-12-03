@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Leaf } from "lucide-react";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -15,25 +14,21 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="max-w-md w-full rounded-xl shadow-2xl bg-card/50 backdrop-blur-sm border border-border p-8 flex flex-col gap-6">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <Leaf className="w-10 h-10 text-primary" />
-          </div>
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background p-4">
+      <div className="absolute inset-0 bg-[url('/login-image.png')] bg-cover bg-center" aria-hidden="true" />
+      <div className="absolute inset-0 bg-background/75 backdrop-brightness-95" aria-hidden="true" />
+
+      <div className="relative max-w-md w-full rounded-xl shadow-xl bg-neutral-950/70 backdrop-blur-md border border-white/10 p-8 flex flex-col gap-6 text-white">
+        <div className="flex flex-col items-center gap-3 text-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Portal Agroconsult
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              Consultoria e Inteligência de Mercado
-            </p>
+            <h1 className="text-3xl font-bold text-white mb-2">Portal Agroconsult</h1>
+            <p className="text-white/70 text-sm">Inteligencia de Mercado</p>
           </div>
         </div>
 
         <form onSubmit={handleEntrar} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label htmlFor="inpEmail" className="text-sm font-medium text-foreground">
+            <label htmlFor="inpEmail" className="text-sm font-medium text-white/90">
               E-mail
             </label>
             <Input
@@ -42,22 +37,22 @@ const LandingPage = () => {
               placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-secondary border-border focus:ring-primary"
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:ring-primary"
               required
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="inpSenha" className="text-sm font-medium text-foreground">
+            <label htmlFor="inpSenha" className="text-sm font-medium text-white/90">
               Senha
             </label>
             <Input
               id="inpSenha"
               type="password"
-              placeholder="••••••••"
+              placeholder="********"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="bg-secondary border-border focus:ring-primary"
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:ring-primary"
               required
             />
           </div>
@@ -71,8 +66,8 @@ const LandingPage = () => {
           </Button>
         </form>
 
-        <p className="text-xs text-center text-muted-foreground mt-2">
-          © 2024 Agroconsult. Todos os direitos reservados.
+        <p className="text-xs text-center text-white/70 mt-2">
+          Agroconsult. Todos os direitos reservados.
         </p>
       </div>
     </div>

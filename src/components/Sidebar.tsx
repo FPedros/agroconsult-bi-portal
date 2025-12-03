@@ -1,31 +1,77 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { NavLink } from "@/components/NavLink";
-import { BarChart3, TrendingUp, DollarSign, Leaf, ChevronLeft, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import {
+  type LucideIcon,
+  BarChart3,
+  TrendingUp,
+  DollarSign,
+  Leaf,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Layers,
+  Rocket,
+  FlaskConical,
+  Globe2,
+} from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import UserMenu from "@/components/UserMenu";
 import ThemeToggle from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
 
-const menuItems = [
-  {
-    title: "Painel Comercial",
-    path: "/app/comercial",
-    icon: TrendingUp,
-  },
-  {
-    title: "Painel Operacional",
-    path: "/app/operacional",
-    icon: BarChart3,
-  },
-  {
-    title: "Painel Financeiro",
-    path: "/app/financeiro",
-    icon: DollarSign,
-  },
-];
+type MenuItem = {
+  title: string;
+  path: string;
+  icon: LucideIcon;
+};
+
+const sectorMenus: Record<string, MenuItem[]> = {
+  consultoria: [
+    { title: "Painel Comercial", path: "/app/comercial", icon: TrendingUp },
+    { title: "Painel Operacional", path: "/app/operacional", icon: BarChart3 },
+    { title: "Painel Financeiro", path: "/app/consultoria/financeiro", icon: DollarSign },
+  ],
+  financeiro: [{ title: "Painel Financeiro", path: "/app/financeiro", icon: DollarSign }],
+  "avaliacao-ativos": [{ title: "Avaliacao de Ativos", path: "/app/setor/avaliacao-ativos", icon: ClipboardList }],
+  "levantamento-safra": [{ title: "Levantamento de Safra", path: "/app/setor/levantamento-safra", icon: Layers }],
+  projetos: [{ title: "Projetos", path: "/app/setor/projetos", icon: Rocket }],
+  "desenvolvimento-inovacao": [
+    { title: "Desenvolvimento e Inovacao", path: "/app/setor/desenvolvimento-inovacao", icon: FlaskConical },
+  ],
+  agroeconomics: [{ title: "AgroEconomics", path: "/app/setor/agroeconomics", icon: Globe2 }],
+};
+
+const sectorLabels: Record<string, string> = {
+  consultoria: "Consultoria",
+  financeiro: "Financeiro",
+  "avaliacao-ativos": "Avaliacao de Ativos",
+  "levantamento-safra": "Levantamento de Safra",
+  projetos: "Projetos",
+  "desenvolvimento-inovacao": "Desenvolvimento e Inovacao",
+  agroeconomics: "AgroEconomics",
+};
+
+const getSectorFromPath = (pathname: string) => {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts[0] !== "app") return "consultoria";
+  const first = parts[1];
+  if (first === "setor") {
+    return parts[2] || "consultoria";
+  }
+  if (first === "comercial" || first === "operacional") return "consultoria";
+  if (first === "financeiro") return "financeiro";
+  return parts[1] || "consultoria";
+};
 
 const Sidebar = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
+  const menuItems = sectorMenus[currentSector] ?? sectorMenus.consultoria;
+  const sectorLabel = sectorLabels[currentSector] ?? "Setor";
 
   return (
     <aside
@@ -47,8 +93,8 @@ const Sidebar = () => {
           </div>
           {!isCollapsed && (
             <div className="leading-tight">
-              <h2 className="text-lg font-bold text-sidebar-foreground">Consultoria</h2>
-              <p className="text-xs text-muted-foreground">Inteligencia de Mercado</p>
+              <h2 className="text-lg font-bold text-sidebar-foreground">{sectorLabel}</h2>
+              <p className="text-xs text-muted-foreground">Selecione um painel</p>
             </div>
           )}
         </Link>
@@ -96,6 +142,18 @@ const Sidebar = () => {
         )}
       >
         <ThemeToggle />
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/app")}
+          className={cn(
+            "flex items-center gap-2 px-2 text-sidebar-foreground hover:bg-sidebar-accent",
+            isCollapsed ? "justify-center" : "justify-start",
+          )}
+          aria-label={isCollapsed ? "Selecionar outro setor" : undefined}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          {!isCollapsed && <span className="text-sm font-medium">Escolher outro setor</span>}
+        </Button>
         <UserMenu collapsed={isCollapsed} />
       </div>
     </aside>
