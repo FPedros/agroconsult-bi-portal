@@ -1,9 +1,10 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { UserProvider } from "./contexts/UserContext";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { UserProvider, useUser } from "./contexts/UserContext";
 import LandingPage from "./pages/LandingPage";
 import AppLayout from "./pages/AppLayout";
 import ComercialPage from "./pages/ComercialPage";
@@ -15,8 +16,34 @@ import PerfilPage from "./pages/PerfilPage";
 import RecuperarSenhaPage from "./pages/RecuperarSenhaPage";
 import NotFound from "./pages/NotFound";
 import SectorPage from "./pages/SectorPage";
+import { useTheme } from "./contexts/ThemeContext";
 
 const queryClient = new QueryClient();
+
+const ThemeApplier = () => {
+  const { theme } = useTheme();
+  const location = useLocation();
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+    const inApp = location.pathname.startsWith("/app");
+    const appliedTheme = inApp ? theme : "dark";
+    root.classList.add(appliedTheme);
+  }, [theme, location.pathname]);
+
+  return null;
+};
+
+const ProtectedAppLayout = () => {
+  const { user } = useUser();
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <AppLayout />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -25,10 +52,11 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ThemeApplier />
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
-            <Route path="/app" element={<AppLayout />}>
+            <Route path="/app" element={<ProtectedAppLayout />}>
               <Route path="comercial" element={<ComercialPage />} />
               <Route path="operacional" element={<OperacionalPage />} />
               <Route path="consultoria/financeiro" element={<ConsultoriaFinanceiroPage />} />

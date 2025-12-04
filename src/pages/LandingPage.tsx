@@ -2,15 +2,32 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useUser } from "@/contexts/UserContext";
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { setUser } = useUser();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [error, setError] = useState("");
 
   const handleEntrar = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/app");
+    const normalizedEmail = email.trim().toLowerCase();
+    const isValidUser = normalizedEmail === "teste@agroconsult.com.br" && senha === "1234";
+
+    if (isValidUser) {
+      setUser({
+        firstName: "Teste",
+        lastName: "Agroconsult",
+        email: "teste@agroconsult.com.br",
+      });
+      setError("");
+      navigate("/app");
+      return;
+    }
+
+    setError("E-mail ou senha invalidos.");
   };
 
   return (
@@ -20,10 +37,8 @@ const LandingPage = () => {
 
       <div className="relative max-w-md w-full rounded-xl shadow-xl bg-neutral-950/70 backdrop-blur-md border border-white/10 p-8 flex flex-col gap-6 text-white">
         <div className="flex flex-col items-center gap-3 text-center">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Portal Agroconsult</h1>
-            <p className="text-white/70 text-sm">Inteligencia de Mercado</p>
-          </div>
+          <img src="/agroconsult.png" alt="Agroconsult" className="h-12 object-contain" />
+          <p className="text-white/70 text-sm">Business Insights Portal</p>
         </div>
 
         <form onSubmit={handleEntrar} className="flex flex-col gap-4">
@@ -56,6 +71,8 @@ const LandingPage = () => {
               required
             />
           </div>
+
+          {error && <p className="text-sm text-red-300">{error}</p>}
 
           <Button
             id="btnEntrar"

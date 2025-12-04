@@ -15,12 +15,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  // TODO: trocar pelo retorno da API depois
-  const [user, setUser] = useState<User | null>({
-    firstName: "Fernando",
-    lastName: "Sousa",
-    email: "fernandosousa@agroconsult.com",
-  });
+  const [user, setUser] = useState<User | null>(null);
 
   const logout = () => {
     setUser(null);
