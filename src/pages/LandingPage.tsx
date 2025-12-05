@@ -14,7 +14,8 @@ const LandingPage = () => {
   const handleEntrar = (e: React.FormEvent) => {
     e.preventDefault();
     const normalizedEmail = email.trim().toLowerCase();
-    const isValidUser = normalizedEmail === "teste@agroconsult.com.br" && senha === "1234";
+    const isValidUser =
+      normalizedEmail === "teste@agroconsult.com.br" && (senha === "1234" || senha === "Agro#2025!");
 
     if (isValidUser) {
       setUser({
