@@ -13,6 +13,10 @@ import {
   Rocket,
   FlaskConical,
   Globe2,
+  Building2,
+  PiggyBank,
+  Sprout,
+  FolderKanban,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -20,20 +24,37 @@ import UserMenu from "@/components/UserMenu";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 
+import { type PowerBiSection } from "@/contexts/PowerBiContext";
+
 type MenuItem = {
   title: string;
   path: string;
   icon: LucideIcon;
+  powerBiKey?: PowerBiSection;
 };
 
 const sectorMenus: Record<string, MenuItem[]> = {
   consultoria: [
-    { title: "Painel Comercial", path: "/app/comercial", icon: TrendingUp },
-    { title: "Painel Operacional", path: "/app/operacional", icon: BarChart3 },
-    { title: "Painel Financeiro", path: "/app/consultoria/financeiro", icon: DollarSign },
+    { title: "Painel Comercial", path: "/app/comercial", icon: TrendingUp, powerBiKey: "consultoria-comercial" },
+    { title: "Painel Operacional", path: "/app/operacional", icon: BarChart3, powerBiKey: "consultoria-operacional" },
+    {
+      title: "Painel Financeiro",
+      path: "/app/consultoria/financeiro",
+      icon: DollarSign,
+      powerBiKey: "consultoria-financeiro",
+    },
   ],
-  financeiro: [{ title: "Painel Financeiro", path: "/app/financeiro", icon: DollarSign }],
-  "avaliacao-ativos": [{ title: "Avaliacao de Ativos", path: "/app/setor/avaliacao-ativos", icon: ClipboardList }],
+  financeiro: [
+    { title: "Painel Financeiro", path: "/app/financeiro", icon: DollarSign, powerBiKey: "financeiro-principal" },
+  ],
+  "avaliacao-ativos": [
+    {
+      title: "Avaliacao de Ativos",
+      path: "/app/setor/avaliacao-ativos",
+      icon: ClipboardList,
+      powerBiKey: "avaliacao-ativos",
+    },
+  ],
   "levantamento-safra": [{ title: "Levantamento de Safra", path: "/app/setor/levantamento-safra", icon: Layers }],
   projetos: [{ title: "Projetos", path: "/app/setor/projetos", icon: Rocket }],
   "desenvolvimento-inovacao": [
@@ -52,16 +73,96 @@ const sectorLabels: Record<string, string> = {
   agroeconomics: "AgroEconomics",
 };
 
+const sectorIcons: Record<string, LucideIcon> = {
+  consultoria: Building2,
+  financeiro: PiggyBank,
+  "avaliacao-ativos": ClipboardList,
+  "levantamento-safra": Sprout,
+  projetos: FolderKanban,
+  "desenvolvimento-inovacao": FlaskConical,
+  agroeconomics: Globe2,
+};
+
+const LAST_SECTOR_STORAGE_KEY = "current-sector";
+
+const readStoredSector = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    const value = window.localStorage.getItem(LAST_SECTOR_STORAGE_KEY);
+    return value && sectorMenus[value] ? value : null;
+  } catch (error) {
+    console.error("Erro ao ler setor salvo", error);
+    return null;
+  }
+};
+
+const persistSector = (sector: string) => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LAST_SECTOR_STORAGE_KEY, sector);
+  } catch (error) {
+    console.error("Erro ao salvar setor", error);
+  }
+};
+
 const getSectorFromPath = (pathname: string) => {
   const parts = pathname.split("/").filter(Boolean);
   if (parts[0] !== "app") return "consultoria";
   const first = parts[1];
   if (first === "setor") {
-    return parts[2] || "consultoria";
+    const sector = parts[2] || "consultoria";
+    if (sectorMenus[sector]) persistSector(sector);
+    return sectorMenus[sector] ? sector : readStoredSector() || "consultoria";
   }
-  if (first === "comercial" || first === "operacional") return "consultoria";
-  if (first === "financeiro") return "financeiro";
-  return parts[1] || "consultoria";
+  if (first === "comercial" || first === "operacional") {
+    persistSector("consultoria");
+    return "consultoria";
+  }
+  if (first === "financeiro") {
+    persistSector("financeiro");
+    return "financeiro";
+  }
+  if (sectorMenus[first]) {
+    persistSector(first);
+    return first;
+  }
+
+  return readStoredSector() || "consultoria";
+};
+
+const standardPanelsForSector = (sector: string): MenuItem[] => [
+  {
+    title: "Painel Comercial",
+    path: `/app/setor/${sector}/comercial`,
+    icon: TrendingUp,
+    powerBiKey: `${sector}-comercial` as PowerBiSection,
+  },
+  {
+    title: "Painel Operacional",
+    path: `/app/setor/${sector}/operacional`,
+    icon: BarChart3,
+    powerBiKey: `${sector}-operacional` as PowerBiSection,
+  },
+  {
+    title: "Painel Financeiro",
+    path: `/app/setor/${sector}/financeiro`,
+    icon: DollarSign,
+    powerBiKey: `${sector}-financeiro` as PowerBiSection,
+  },
+];
+
+const getMenuItemsBySector = (sector: string) => {
+  const existingItems = sectorMenus[sector] ?? sectorMenus.consultoria;
+  const sectorLabel = sectorLabels[sector]?.toLowerCase();
+  const filteredExisting = sectorLabel
+    ? existingItems.filter((item) => item.title.toLowerCase() !== sectorLabel)
+    : existingItems;
+
+  const existingTitles = new Set(filteredExisting.map((item) => item.title.toLowerCase()));
+
+  const extras = standardPanelsForSector(sector).filter((panel) => !existingTitles.has(panel.title.toLowerCase()));
+
+  return [...filteredExisting, ...extras];
 };
 
 const Sidebar = () => {
@@ -70,8 +171,9 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
-  const menuItems = sectorMenus[currentSector] ?? sectorMenus.consultoria;
+  const menuItems = getMenuItemsBySector(currentSector);
   const sectorLabel = sectorLabels[currentSector] ?? "Setor";
+  const SectorIcon = sectorIcons[currentSector] ?? Leaf;
 
   return (
     <aside
@@ -89,12 +191,11 @@ const Sidebar = () => {
           )}
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Leaf className="h-6 w-6 text-primary" />
+            <SectorIcon className="h-6 w-6 text-primary" />
           </div>
           {!isCollapsed && (
             <div className="leading-tight">
               <h2 className="text-lg font-bold text-sidebar-foreground">{sectorLabel}</h2>
-              <p className="text-xs text-muted-foreground">Selecione um painel</p>
             </div>
           )}
         </Link>
@@ -161,3 +262,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+export { sectorMenus, sectorLabels, getSectorFromPath, getMenuItemsBySector };
