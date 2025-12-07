@@ -1,19 +1,19 @@
-import { usePowerBi } from "@/contexts/PowerBiContext";
+import { usePowerBiLink } from "@/hooks/usePowerBiLink";
 
 const AvaliacaoAtivosPage = () => {
-  const { links } = usePowerBi();
+  const { data, loading, error } = usePowerBiLink({ sectorSlug: "avaliacao-ativos", panel: "principal" });
+
+  if (loading) return <p>Carregando painel...</p>;
+  if (error) return <p style={{ color: "red" }}>Erro: {error}</p>;
+  if (!data) return <p>Nenhum link configurado.</p>;
 
   return (
-    <div className="flex h-full w-full min-h-0">
-      <div className="h-full w-full rounded-xl border border-border overflow-hidden bg-card shadow-lg">
-        <iframe
-          src={links["avaliacao-ativos"]}
-          className="h-full w-full"
-          title="Artificial Intelligence Sample"
-          allowFullScreen
-        />
-      </div>
-    </div>
+    <iframe
+      src={data.url}
+      style={{ width: "100%", height: "calc(100vh - 120px)" }}
+      title="Artificial Intelligence Sample"
+      allowFullScreen
+    />
   );
 };
 

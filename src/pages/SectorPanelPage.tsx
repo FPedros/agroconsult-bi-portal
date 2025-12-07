@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { PowerBiSection, POWER_BI_SECTIONS, usePowerBi } from "@/contexts/PowerBiContext";
+import { usePowerBiLink } from "@/hooks/usePowerBiLink";
 import { cn } from "@/lib/utils";
+import { PowerBiPanel } from "@/lib/types";
 
-type PanelId = "comercial" | "operacional" | "financeiro";
+const isValidPanel = (panel?: string): panel is PowerBiPanel =>
+  panel === "comercial" || panel === "operacional" || panel === "financeiro" || panel === "principal";
 
 const formatSector = (sectorId?: string) => {
   if (!sectorId) return "Setor";
@@ -14,41 +16,44 @@ const formatSector = (sectorId?: string) => {
 };
 
 const SectorPanelPage = () => {
-  const { sectorId, panelId } = useParams<{ sectorId: string; panelId: PanelId }>();
-  const { links } = usePowerBi();
+  const { sectorId, panelId } = useParams<{ sectorId: string; panelId: string }>();
 
-  const powerBiKey = useMemo(() => {
-    if (!sectorId) return null;
-    if (!panelId || !["comercial", "operacional", "financeiro"].includes(panelId)) return null;
-    const key = `${sectorId}-${panelId}` as PowerBiSection;
-    if (!POWER_BI_SECTIONS[key]) return null;
-    return key;
-  }, [sectorId, panelId]);
+  const panel = useMemo(() => (isValidPanel(panelId) ? panelId : null), [panelId]);
+  const slug = sectorId ?? "";
 
-  const currentLink = powerBiKey ? links[powerBiKey] : "";
-  const sectorLabel = formatSector(sectorId);
-  const panelLabel = panelId ? `Painel ${panelId.charAt(0).toUpperCase() + panelId.slice(1)}` : "Painel";
+  const { data, loading, error } = usePowerBiLink({
+    sectorSlug: slug,
+    panel: panel ?? "comercial",
+  });
 
-  const missingLink = !currentLink;
+  const sectorLabel = formatSector(slug);
+  const panelLabel = panel ? `Painel ${panel.charAt(0).toUpperCase() + panel.slice(1)}` : "Painel";
+  const showFrame = slug && panel && !loading && !error && !!data;
 
   return (
     <div className="flex h-full w-full min-h-0">
       <div className="flex h-full w-full flex-col rounded-xl border border-border bg-card/80 shadow-lg">
         <div className="border-b border-border px-4 py-3">
           <p className="text-sm font-semibold text-foreground">
-            {sectorLabel} · {panelLabel}
+            {sectorLabel} - {panelLabel}
           </p>
         </div>
-        <div className={cn("flex-1", missingLink ? "flex items-center justify-center p-8" : "overflow-hidden")}>
-          {missingLink ? (
-            <div className="max-w-xl text-center space-y-2">
-              <p className="text-lg font-semibold text-foreground">Link do Power BI não configurado</p>
-              <p className="text-sm text-muted-foreground">
-                Defina o link deste painel em Gerenciar cadastro → Alterar Power BI para visualizar o dashboard.
-              </p>
-            </div>
+        <div className={cn("flex-1", showFrame ? "overflow-hidden" : "flex items-center justify-center p-8 text-center")}>
+          {!slug || !panel ? (
+            <p className="text-sm text-foreground">Setor ou painel invalido.</p>
+          ) : loading ? (
+            <p>Carregando painel...</p>
+          ) : error ? (
+            <p style={{ color: "red" }}>Erro: {error}</p>
+          ) : !data ? (
+            <p>Nenhum link configurado.</p>
           ) : (
-            <iframe src={currentLink} className="h-full w-full" title={`${sectorLabel}-${panelLabel}`} allowFullScreen />
+            <iframe
+              src={data.url}
+              className="h-full w-full"
+              title={`${sectorLabel}-${panelLabel}`}
+              allowFullScreen
+            />
           )}
         </div>
       </div>

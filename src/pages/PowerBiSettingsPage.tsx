@@ -13,14 +13,16 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
-import { POWER_BI_SECTIONS, PowerBiSection, usePowerBi } from "@/contexts/PowerBiContext";
+import { POWER_BI_SECTIONS, PowerBiSection } from "@/contexts/PowerBiContext";
 import { getMenuItemsBySector, getSectorFromPath, sectorLabels } from "@/components/Sidebar";
+import { PowerBiPanel } from "@/lib/types";
+import { upsertPowerBiLink } from "@/lib/powerBiRepository";
 
 const PowerBiSettingsPage = () => {
   const location = useLocation();
-  const { links, updateLink } = usePowerBi();
   const [selectedSection, setSelectedSection] = useState<PowerBiSection | "">("");
   const [newLink, setNewLink] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
 
@@ -42,16 +44,52 @@ const PowerBiSettingsPage = () => {
     }
   }, [availableSections, selectedSection]);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const parseSection = (section: PowerBiSection): { sectorSlug: string; panel: PowerBiPanel } | null => {
+    const panels: PowerBiPanel[] = ["comercial", "operacional", "financeiro", "principal"];
+    const match = panels.find((panel) => section.endsWith(`-${panel}`));
+    if (match) {
+      const sectorSlug = section.slice(0, section.length - (match.length + 1));
+      if (!sectorSlug) return null;
+      return { sectorSlug, panel: match };
+    }
+
+    if (section === "avaliacao-ativos") {
+      return { sectorSlug: "avaliacao-ativos", panel: "principal" };
+    }
+
+    return null;
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedSection || !newLink.trim()) return;
 
-    updateLink(selectedSection, newLink);
-    toast({
-      title: "Power BI atualizado",
-      description: `${POWER_BI_SECTIONS[selectedSection].label} agora usa o novo link.`,
-    });
-    setNewLink("");
+    const parsed = parseSection(selectedSection);
+    if (!parsed) {
+      toast({ title: "Erro", description: "Nao foi possivel identificar setor/painel para esta secao.", variant: "destructive" });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await upsertPowerBiLink({
+        sectorSlug: parsed.sectorSlug,
+        panel: parsed.panel,
+        url: newLink,
+        sectorName: sectorLabels[currentSector] ?? parsed.sectorSlug,
+      });
+
+      toast({
+        title: "Power BI atualizado",
+        description: `${POWER_BI_SECTIONS[selectedSection].label} agora usa o novo link.`,
+      });
+      setNewLink("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao salvar link do Power BI";
+      toast({ title: "Erro", description: message, variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const hasSections = availableSections.length > 0;
@@ -109,8 +147,8 @@ const PowerBiSettingsPage = () => {
           )}
 
           <div className="flex justify-end gap-3">
-            <Button type="submit" disabled={!selectedSection || !newLink.trim()}>
-              Salvar novo link
+            <Button type="submit" disabled={!selectedSection || !newLink.trim() || isSaving}>
+              {isSaving ? "Salvando..." : "Salvar novo link"}
             </Button>
           </div>
         </form>

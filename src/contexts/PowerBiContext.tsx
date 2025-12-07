@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 type PanelSlug = "comercial" | "operacional" | "financeiro";
@@ -21,7 +22,6 @@ const decodeBase64 = (encoded: string) => {
   try {
     if (typeof atob === "function") return atob(encoded);
     // Node/SSR fallback
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     return Buffer.from(encoded, "base64").toString("utf-8");
   } catch (error) {
     console.error("Erro ao decodificar link do Power BI", error);

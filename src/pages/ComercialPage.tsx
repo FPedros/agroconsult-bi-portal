@@ -1,19 +1,18 @@
-import { usePowerBi } from "@/contexts/PowerBiContext";
+import { usePowerBiLink } from "@/hooks/usePowerBiLink";
 
 const ComercialPage = () => {
-  const { links } = usePowerBi();
+  const { data, loading, error } = usePowerBiLink({ sectorSlug: "consultoria", panel: "comercial" });
+
+  if (loading) return <p>Carregando painel...</p>;
+  if (error) return <p style={{ color: "red" }}>Erro: {error}</p>;
+  if (!data) return <p>Nenhum link configurado.</p>;
 
   return (
-    <div className="flex h-full w-full min-h-0">
-      <div className="h-full w-full rounded-xl border border-border overflow-hidden bg-card shadow-lg">
-        <iframe
-          src={links["consultoria-comercial"]}
-          className="h-full w-full"
-          title="Processos_Consultoria_novo"
-          allowFullScreen
-        />
-      </div>
-    </div>
+    <iframe
+      src={data.url}
+      style={{ width: "100%", height: "calc(100vh - 120px)" }}
+      allowFullScreen
+    />
   );
 };
 
