@@ -14,6 +14,10 @@ import {
 } from "@/lib/sidebarItems";
 import { getBaseMenuItemsBySector, getSectorFromPath, sectorLabels } from "@/lib/sidebarMenu";
 
+const PROTECTED_PATHS = new Set(["/app/relatorios"]);
+
+const isProtectedPath = (path: string) => PROTECTED_PATHS.has(path);
+
 const SidebarItemsPage = () => {
   const location = useLocation();
   const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
@@ -36,7 +40,7 @@ const SidebarItemsPage = () => {
         const baseItems = getBaseMenuItemsBySector(currentSector);
         const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(currentSector);
         const visibleBase = baseItems
-          .filter((item) => !hiddenPaths.has(item.path))
+          .filter((item) => !hiddenPaths.has(item.path) || isProtectedPath(item.path))
           .map((item) => ({
             ...item,
             id: item.path,
@@ -76,7 +80,7 @@ const SidebarItemsPage = () => {
     const baseItems = getBaseMenuItemsBySector(currentSector);
     const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(currentSector);
     const visibleBase = baseItems
-      .filter((item) => !hiddenPaths.has(item.path))
+      .filter((item) => !hiddenPaths.has(item.path) || isProtectedPath(item.path))
       .map((item) => ({
         ...item,
         id: item.path,
@@ -117,6 +121,10 @@ const SidebarItemsPage = () => {
 
   const handleRemove = async (item: SidebarMenuItem) => {
     setFormError("");
+    if (!item.isCustom && isProtectedPath(item.path)) {
+      setFormError("O item Relatórios é fixo e não pode ser removido.");
+      return;
+    }
     setRemovingId(item.id);
     try {
       if (item.isCustom) {
@@ -195,30 +203,33 @@ const SidebarItemsPage = () => {
                 Nenhum item cadastrado para este setor.
               </div>
             ) : (
-              items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card/70 px-4 py-3"
-                >
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground">{item.title}</p>
+              items.map((item) => {
+                const isProtected = !item.isCustom && isProtectedPath(item.path);
+                return (
+                  <div
+                    key={item.id}
+                    className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card/70 px-4 py-3"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">{item.title}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        {item.isCustom ? "Personalizado" : isProtected ? "Fixo" : "Padrão"}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRemove(item)}
+                        disabled={removingId === item.id || isProtected}
+                      >
+                        {removingId === item.id ? "Removendo..." : "Remover"}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground">
-                      {item.isCustom ? "Personalizado" : "Padrão"}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRemove(item)}
-                      disabled={removingId === item.id}
-                    >
-                      {removingId === item.id ? "Removendo..." : "Remover"}
-                    </Button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </CardContent>
         </Card>

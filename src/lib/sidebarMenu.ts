@@ -17,6 +17,8 @@ export type BaseMenuItem = {
   powerBiKey?: PowerBiSection;
 };
 
+const sharedMenuItems: BaseMenuItem[] = [{ title: "Relatórios", path: "/app/relatorios" }];
+
 const sectorMenus: Record<string, BaseMenuItem[]> = {
   consultoria: [
     { title: "Painel Comercial", path: "/app/comercial", powerBiKey: "consultoria-comercial" },
@@ -139,7 +141,13 @@ export const getBaseMenuItemsBySector = (sector: string): BaseMenuItem[] => {
   const existingTitles = new Set(filteredExisting.map((item) => item.title.toLowerCase()));
   const extras = standardPanelsForSector(sector).filter((panel) => !existingTitles.has(panel.title.toLowerCase()));
 
-  return [...filteredExisting, ...extras];
+  const merged = [...filteredExisting, ...extras, ...sharedMenuItems];
+  const seenPaths = new Set<string>();
+  return merged.filter((item) => {
+    if (seenPaths.has(item.path)) return false;
+    seenPaths.add(item.path);
+    return true;
+  });
 };
 
 export { sectorMenus };

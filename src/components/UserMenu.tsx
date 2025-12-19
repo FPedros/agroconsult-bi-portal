@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
-import { User, Settings, LogOut, BarChart3, ListPlus } from "lucide-react";
+import { User, Settings, LogOut, BarChart3, ListPlus, FileUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -66,6 +66,13 @@ const UserMenu = ({ collapsed = false }: UserMenuProps) => {
         >
           <Settings className="mr-2 h-4 w-4" />
           <span>Gerenciar cadastro</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => navigate("/app/perfil#relatorios")}
+          className="cursor-pointer"
+        >
+          <FileUp className="mr-2 h-4 w-4" />
+          <span>Inserir relatório</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => navigate("/app/powerbi")}

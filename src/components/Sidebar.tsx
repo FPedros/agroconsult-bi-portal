@@ -13,6 +13,17 @@ import {
 } from "@/lib/sidebarItems";
 import { getBaseMenuItemsBySector, getSectorFromPath, sectorIcons, sectorLabels } from "@/lib/sidebarMenu";
 
+const REPORTS_PATH = "/app/relatorios";
+const PROTECTED_PATHS = new Set([REPORTS_PATH]);
+
+const isProtectedPath = (path: string) => PROTECTED_PATHS.has(path);
+
+const ensureReportsLast = (items: SidebarMenuItem[]) => {
+  const reports = items.filter((item) => item.path === REPORTS_PATH);
+  const rest = items.filter((item) => item.path !== REPORTS_PATH);
+  return [...rest, ...reports];
+};
+
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -35,13 +46,13 @@ const Sidebar = () => {
       }));
 
       if (isActive) {
-        setMenuItems(fallbackItems);
+        setMenuItems(ensureReportsLast(fallbackItems));
       }
 
       try {
         const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(currentSector);
         const visibleBase = baseItems
-          .filter((item) => !hiddenPaths.has(item.path))
+          .filter((item) => !hiddenPaths.has(item.path) || isProtectedPath(item.path))
           .map((item) => ({
             ...item,
             id: item.path,
@@ -49,7 +60,7 @@ const Sidebar = () => {
           }));
 
         if (isActive) {
-          setMenuItems([...visibleBase, ...customItems]);
+          setMenuItems(ensureReportsLast([...visibleBase, ...customItems]));
         }
       } catch (error) {
         console.error("Erro ao carregar itens da sidebar", error);
