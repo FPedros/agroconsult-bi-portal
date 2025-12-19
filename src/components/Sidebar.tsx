@@ -1,180 +1,74 @@
-/* eslint-disable react-refresh/only-export-components */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "@/components/NavLink";
-import {
-  type LucideIcon,
-  BarChart3,
-  TrendingUp,
-  DollarSign,
-  Leaf,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  Layers,
-  Rocket,
-  FlaskConical,
-  Globe2,
-  Building2,
-  PiggyBank,
-  Sprout,
-  FolderKanban,
-} from "lucide-react";
+import { Leaf, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import UserMenu from "@/components/UserMenu";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-
-import { type PowerBiSection } from "@/contexts/PowerBiContext";
-
-type MenuItem = {
-  title: string;
-  path: string;
-  icon: LucideIcon;
-  powerBiKey?: PowerBiSection;
-};
-
-const sectorMenus: Record<string, MenuItem[]> = {
-  consultoria: [
-    { title: "Painel Comercial", path: "/app/comercial", icon: TrendingUp, powerBiKey: "consultoria-comercial" },
-    { title: "Painel Operacional", path: "/app/operacional", icon: BarChart3, powerBiKey: "consultoria-operacional" },
-    {
-      title: "Painel Financeiro",
-      path: "/app/consultoria/financeiro",
-      icon: DollarSign,
-      powerBiKey: "consultoria-financeiro",
-    },
-  ],
-  financeiro: [
-    { title: "Painel Financeiro", path: "/app/financeiro", icon: DollarSign, powerBiKey: "financeiro-principal" },
-  ],
-  "avaliacao-ativos": [
-    {
-      title: "Avaliacao de Ativos",
-      path: "/app/setor/avaliacao-ativos",
-      icon: ClipboardList,
-      powerBiKey: "avaliacao-ativos",
-    },
-  ],
-  "levantamento-safra": [{ title: "Levantamento de Safra", path: "/app/setor/levantamento-safra", icon: Layers }],
-  projetos: [{ title: "Projetos", path: "/app/setor/projetos", icon: Rocket }],
-  "desenvolvimento-inovacao": [
-    { title: "Desenvolvimento e Inovacao", path: "/app/setor/desenvolvimento-inovacao", icon: FlaskConical },
-  ],
-  agroeconomics: [{ title: "AgroEconomics", path: "/app/setor/agroeconomics", icon: Globe2 }],
-};
-
-const sectorLabels: Record<string, string> = {
-  consultoria: "Consultoria",
-  financeiro: "Financeiro",
-  "avaliacao-ativos": "Avaliacao de Ativos",
-  "levantamento-safra": "Levantamento de Safra",
-  projetos: "Projetos",
-  "desenvolvimento-inovacao": "Desenvolvimento e Inovacao",
-  agroeconomics: "AgroEconomics",
-};
-
-const sectorIcons: Record<string, LucideIcon> = {
-  consultoria: Building2,
-  financeiro: PiggyBank,
-  "avaliacao-ativos": ClipboardList,
-  "levantamento-safra": Sprout,
-  projetos: FolderKanban,
-  "desenvolvimento-inovacao": FlaskConical,
-  agroeconomics: Globe2,
-};
-
-const LAST_SECTOR_STORAGE_KEY = "current-sector";
-
-const readStoredSector = () => {
-  if (typeof window === "undefined") return null;
-  try {
-    const value = window.localStorage.getItem(LAST_SECTOR_STORAGE_KEY);
-    return value && sectorMenus[value] ? value : null;
-  } catch (error) {
-    console.error("Erro ao ler setor salvo", error);
-    return null;
-  }
-};
-
-const persistSector = (sector: string) => {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(LAST_SECTOR_STORAGE_KEY, sector);
-  } catch (error) {
-    console.error("Erro ao salvar setor", error);
-  }
-};
-
-const getSectorFromPath = (pathname: string) => {
-  const parts = pathname.split("/").filter(Boolean);
-  if (parts[0] !== "app") return "consultoria";
-  const first = parts[1];
-  if (first === "setor") {
-    const sector = parts[2] || "consultoria";
-    if (sectorMenus[sector]) persistSector(sector);
-    return sectorMenus[sector] ? sector : readStoredSector() || "consultoria";
-  }
-  if (first === "comercial" || first === "operacional") {
-    persistSector("consultoria");
-    return "consultoria";
-  }
-  if (first === "financeiro") {
-    persistSector("financeiro");
-    return "financeiro";
-  }
-  if (sectorMenus[first]) {
-    persistSector(first);
-    return first;
-  }
-
-  return readStoredSector() || "consultoria";
-};
-
-const standardPanelsForSector = (sector: string): MenuItem[] => [
-  {
-    title: "Painel Comercial",
-    path: `/app/setor/${sector}/comercial`,
-    icon: TrendingUp,
-    powerBiKey: `${sector}-comercial` as PowerBiSection,
-  },
-  {
-    title: "Painel Operacional",
-    path: `/app/setor/${sector}/operacional`,
-    icon: BarChart3,
-    powerBiKey: `${sector}-operacional` as PowerBiSection,
-  },
-  {
-    title: "Painel Financeiro",
-    path: `/app/setor/${sector}/financeiro`,
-    icon: DollarSign,
-    powerBiKey: `${sector}-financeiro` as PowerBiSection,
-  },
-];
-
-const getMenuItemsBySector = (sector: string) => {
-  const existingItems = sectorMenus[sector] ?? sectorMenus.consultoria;
-  const sectorLabel = sectorLabels[sector]?.toLowerCase();
-  const filteredExisting = sectorLabel
-    ? existingItems.filter((item) => item.title.toLowerCase() !== sectorLabel)
-    : existingItems;
-
-  const existingTitles = new Set(filteredExisting.map((item) => item.title.toLowerCase()));
-
-  const extras = standardPanelsForSector(sector).filter((panel) => !existingTitles.has(panel.title.toLowerCase()));
-
-  return [...filteredExisting, ...extras];
-};
+import {
+  fetchSidebarItemsForSector,
+  SIDEBAR_ITEMS_EVENT,
+  type SidebarMenuItem,
+} from "@/lib/sidebarItems";
+import { getBaseMenuItemsBySector, getSectorFromPath, sectorIcons, sectorLabels } from "@/lib/sidebarMenu";
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [menuItems, setMenuItems] = useState<SidebarMenuItem[]>([]);
 
   const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
-  const menuItems = getMenuItemsBySector(currentSector);
   const sectorLabel = sectorLabels[currentSector] ?? "Setor";
   const SectorIcon = sectorIcons[currentSector] ?? Leaf;
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadMenuItems = async () => {
+      const baseItems = getBaseMenuItemsBySector(currentSector);
+      const fallbackItems = baseItems.map((item) => ({
+        ...item,
+        id: item.path,
+        isCustom: false,
+      }));
+
+      if (isActive) {
+        setMenuItems(fallbackItems);
+      }
+
+      try {
+        const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(currentSector);
+        const visibleBase = baseItems
+          .filter((item) => !hiddenPaths.has(item.path))
+          .map((item) => ({
+            ...item,
+            id: item.path,
+            isCustom: false,
+          }));
+
+        if (isActive) {
+          setMenuItems([...visibleBase, ...customItems]);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar itens da sidebar", error);
+      }
+    };
+
+    loadMenuItems();
+
+    const handleUpdate = () => {
+      loadMenuItems();
+    };
+
+    window.addEventListener(SIDEBAR_ITEMS_EVENT, handleUpdate);
+
+    return () => {
+      isActive = false;
+      window.removeEventListener(SIDEBAR_ITEMS_EVENT, handleUpdate);
+    };
+  }, [currentSector]);
 
   return (
     <aside
@@ -214,14 +108,20 @@ const Sidebar = () => {
       <nav className={cn("flex-1 p-4", isCollapsed && "px-2")}>
         <div className="space-y-2">
           {menuItems.map((item) => {
-            const Icon = item.icon;
+            const collapsedLabel = item.title
+              .split(" ")
+              .filter(Boolean)
+              .map((part) => part[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase();
             return (
               <NavLink
-                key={item.path}
+                key={item.id}
                 to={item.path}
                 title={isCollapsed ? item.title : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-4 py-3 text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent",
+                  "flex items-center rounded-lg px-4 py-3 text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent",
                   isCollapsed && "justify-center px-3",
                 )}
                 activeClassName={cn(
@@ -229,8 +129,11 @@ const Sidebar = () => {
                   isCollapsed && "text-primary",
                 )}
               >
-                <Icon className="h-5 w-5" />
-                {!isCollapsed && <span className="text-sm">{item.title}</span>}
+                {isCollapsed ? (
+                  <span className="text-xs font-semibold text-sidebar-foreground/80">{collapsedLabel}</span>
+                ) : (
+                  <span className="text-sm">{item.title}</span>
+                )}
               </NavLink>
             );
           })}
@@ -263,4 +166,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-export { sectorMenus, sectorLabels, getSectorFromPath, getMenuItemsBySector };

@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUser } from "@/contexts/UserContext";
+
+type NeuralNode = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+};
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -10,6 +18,7 @@ const LandingPage = () => {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const handleEntrar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,12 +40,138 @@ const LandingPage = () => {
     setError("E-mail ou senha invalidos.");
   };
 
-  return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background p-4">
-      <div className="absolute inset-0 bg-[url('/login-image.png')] bg-cover bg-center" aria-hidden="true" />
-      <div className="absolute inset-0 bg-background/75 backdrop-brightness-95" aria-hidden="true" />
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-      <div className="relative max-w-md w-full rounded-xl shadow-xl bg-neutral-950/70 backdrop-blur-md border border-white/10 p-8 flex flex-col gap-6 text-white">
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    let animationFrameId = 0;
+    let width = 0;
+    let height = 0;
+    let nodes: NeuralNode[] = [];
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const randomBetween = (min: number, max: number) => min + Math.random() * (max - min);
+
+    const resize = () => {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+
+      const rect = parent.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      const dpr = window.devicePixelRatio || 1;
+
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const count = Math.min(120, Math.max(50, Math.floor((width * height) / 12000)));
+      nodes = Array.from({ length: count }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: randomBetween(-0.4, 0.4),
+        vy: randomBetween(-0.4, 0.4),
+        radius: randomBetween(1, 2.4),
+      }));
+    };
+
+    const draw = () => {
+      if (width === 0 || height === 0) {
+        animationFrameId = requestAnimationFrame(draw);
+        return;
+      }
+
+      context.clearRect(0, 0, width, height);
+
+      for (const node of nodes) {
+        node.x += node.vx;
+        node.y += node.vy;
+
+        if (node.x <= 0 || node.x >= width) node.vx *= -1;
+        if (node.y <= 0 || node.y >= height) node.vy *= -1;
+      }
+
+      const maxDistance = Math.min(200, Math.max(120, Math.min(width, height) * 0.2));
+      context.lineWidth = 1.4;
+
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        for (let j = i + 1; j < nodes.length; j++) {
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < maxDistance) {
+            const alpha = 1 - dist / maxDistance;
+            context.strokeStyle = `rgba(80, 255, 120, ${alpha * 0.7})`;
+            context.beginPath();
+            context.moveTo(a.x, a.y);
+            context.lineTo(b.x, b.y);
+            context.stroke();
+          }
+        }
+      }
+
+      for (const node of nodes) {
+        context.fillStyle = "rgba(140, 255, 170, 0.95)";
+        context.beginPath();
+        context.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+        context.fill();
+      }
+
+      if (!reduceMotion) {
+        animationFrameId = requestAnimationFrame(draw);
+      }
+    };
+
+    resize();
+    draw();
+    window.addEventListener("resize", resize);
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return (
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-neutral-950 p-4">
+      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full z-0 pointer-events-none" aria-hidden="true" />
+      <div className="absolute inset-0 z-10 pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(120% 80% at 50% 0%, rgba(0, 255, 150, 0.2), rgba(0, 0, 0, 0.95) 60%), radial-gradient(45% 45% at 80% 15%, rgba(0, 255, 130, 0.18), transparent 60%), linear-gradient(180deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.9))",
+          }}
+        />
+        <div
+          className="absolute inset-0 opacity-40 mix-blend-screen"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(0, 255, 140, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 255, 140, 0.08) 1px, transparent 1px)",
+            backgroundSize: "120px 120px",
+          }}
+        />
+        <div
+          className="absolute inset-x-[-15%] bottom-[-35%] h-[70%] opacity-60"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, rgba(0, 255, 120, 0.35) 0px, rgba(0, 255, 120, 0.35) 1px, transparent 1px, transparent 16px)",
+            transform: "perspective(900px) rotateX(65deg)",
+            transformOrigin: "top center",
+            filter: "blur(0.2px)",
+          }}
+        />
+      </div>
+      <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px] z-10 pointer-events-none" aria-hidden="true" />
+
+      <div className="relative z-20 max-w-md w-full rounded-xl shadow-xl bg-neutral-950/70 backdrop-blur-md border border-white/10 p-8 flex flex-col gap-6 text-white">
         <div className="flex flex-col items-center gap-3 text-center">
           <img src="/agroconsult.png" alt="Agroconsult" className="h-12 object-contain" />
           <p className="text-white/70 text-sm">Business Insights Portal</p>

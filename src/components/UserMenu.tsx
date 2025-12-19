@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
-import { User, Settings, LogOut, BarChart3 } from "lucide-react";
+import { User, Settings, LogOut, BarChart3, ListPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -73,6 +73,13 @@ const UserMenu = ({ collapsed = false }: UserMenuProps) => {
         >
           <BarChart3 className="mr-2 h-4 w-4" />
           <span>Alterar Power BI</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => navigate("/app/itens-sidebar")}
+          className="cursor-pointer"
+        >
+          <ListPlus className="mr-2 h-4 w-4" />
+          <span>Gerenciar itens da sidebar</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">

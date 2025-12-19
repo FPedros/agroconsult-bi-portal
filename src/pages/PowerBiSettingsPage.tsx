@@ -14,33 +14,98 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { POWER_BI_SECTIONS, PowerBiSection } from "@/contexts/PowerBiContext";
-import { getMenuItemsBySector, getSectorFromPath, sectorLabels } from "@/components/Sidebar";
+import { fetchSidebarItemsForSector, updateSidebarItemLink, type SidebarMenuItem } from "@/lib/sidebarItems";
+import { getBaseMenuItemsBySector, getSectorFromPath, sectorLabels } from "@/lib/sidebarMenu";
 import { PowerBiPanel } from "@/lib/types";
 import { upsertPowerBiLink } from "@/lib/powerBiRepository";
 
+type SectionOption = {
+  value: string;
+  label: string;
+  kind: "padrao" | "custom";
+};
+
+const CUSTOM_PREFIX = "custom:";
+
 const PowerBiSettingsPage = () => {
   const location = useLocation();
-  const [selectedSection, setSelectedSection] = useState<PowerBiSection | "">("");
+  const [selectedSection, setSelectedSection] = useState("");
   const [newLink, setNewLink] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [customItems, setCustomItems] = useState<SidebarMenuItem[]>([]);
+  const [hiddenPaths, setHiddenPaths] = useState<string[]>([]);
+  const [itemsError, setItemsError] = useState("");
+  const [isItemsLoading, setIsItemsLoading] = useState(false);
 
   const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
 
-  const availableSections = useMemo(() => {
-    const items = getMenuItemsBySector(currentSector);
+  useEffect(() => {
+    let isActive = true;
+
+    const loadCustomItems = async () => {
+      setIsItemsLoading(true);
+      setItemsError("");
+      try {
+        const { customItems: fetchedCustomItems, hiddenPaths: hidden } = await fetchSidebarItemsForSector(
+          currentSector,
+        );
+        if (isActive) {
+          setCustomItems(fetchedCustomItems);
+          setHiddenPaths(Array.from(hidden));
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Erro ao carregar itens da sidebar.";
+        if (isActive) {
+          setItemsError(message);
+          setCustomItems([]);
+          setHiddenPaths([]);
+        }
+      } finally {
+        if (isActive) {
+          setIsItemsLoading(false);
+        }
+      }
+    };
+
+    loadCustomItems();
+
+    return () => {
+      isActive = false;
+    };
+  }, [currentSector]);
+
+  const standardSections = useMemo<SectionOption[]>(() => {
+    const hiddenSet = new Set(hiddenPaths);
+    const items = getBaseMenuItemsBySector(currentSector).filter((item) => !hiddenSet.has(item.path));
     const keys = items
       .map((item) => item.powerBiKey)
       .filter((key): key is PowerBiSection => Boolean(key) && key in POWER_BI_SECTIONS);
     const uniqueKeys = Array.from(new Set(keys));
     return uniqueKeys.map((section) => ({
-      section,
+      value: section,
       label: POWER_BI_SECTIONS[section].label,
+      kind: "padrao",
     }));
-  }, [currentSector]);
+  }, [currentSector, hiddenPaths]);
+
+  const customSections = useMemo<SectionOption[]>(
+    () =>
+      customItems.map((item) => ({
+        value: `${CUSTOM_PREFIX}${item.id}`,
+        label: item.title,
+        kind: "custom",
+      })),
+    [customItems],
+  );
+
+  const availableSections = useMemo(
+    () => [...standardSections, ...customSections],
+    [standardSections, customSections],
+  );
 
   useEffect(() => {
-    if (!availableSections.some((item) => item.section === selectedSection)) {
-      setSelectedSection(availableSections[0]?.section ?? "");
+    if (!availableSections.some((item) => item.value === selectedSection)) {
+      setSelectedSection(availableSections[0]?.value ?? "");
     }
   }, [availableSections, selectedSection]);
 
@@ -64,25 +129,51 @@ const PowerBiSettingsPage = () => {
     event.preventDefault();
     if (!selectedSection || !newLink.trim()) return;
 
-    const parsed = parseSection(selectedSection);
-    if (!parsed) {
-      toast({ title: "Erro", description: "Nao foi possivel identificar setor/painel para esta secao.", variant: "destructive" });
-      return;
-    }
-
     setIsSaving(true);
     try {
-      await upsertPowerBiLink({
-        sectorSlug: parsed.sectorSlug,
-        panel: parsed.panel,
-        url: newLink,
-        sectorName: sectorLabels[currentSector] ?? parsed.sectorSlug,
-      });
+      const selectedOption = availableSections.find((item) => item.value === selectedSection);
 
-      toast({
-        title: "Power BI atualizado",
-        description: `${POWER_BI_SECTIONS[selectedSection].label} agora usa o novo link.`,
-      });
+      if (selectedSection.startsWith(CUSTOM_PREFIX)) {
+        const itemId = selectedSection.slice(CUSTOM_PREFIX.length);
+        if (!itemId) {
+          toast({ title: "Erro", description: "Item personalizado invalido.", variant: "destructive" });
+          return;
+        }
+
+        await updateSidebarItemLink(itemId, newLink);
+        toast({
+          title: "Power BI atualizado",
+          description: `${selectedOption?.label ?? "Item personalizado"} agora usa o novo link.`,
+        });
+      } else {
+        if (!(selectedSection in POWER_BI_SECTIONS)) {
+          toast({ title: "Erro", description: "Secao invalida.", variant: "destructive" });
+          return;
+        }
+
+        const parsed = parseSection(selectedSection as PowerBiSection);
+        if (!parsed) {
+          toast({
+            title: "Erro",
+            description: "Nao foi possivel identificar setor/painel para esta secao.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        await upsertPowerBiLink({
+          sectorSlug: parsed.sectorSlug,
+          panel: parsed.panel,
+          url: newLink,
+          sectorName: sectorLabels[currentSector] ?? parsed.sectorSlug,
+        });
+
+        toast({
+          title: "Power BI atualizado",
+          description: `${POWER_BI_SECTIONS[selectedSection as PowerBiSection].label} agora usa o novo link.`,
+        });
+      }
+
       setNewLink("");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao salvar link do Power BI";
@@ -93,6 +184,7 @@ const PowerBiSettingsPage = () => {
   };
 
   const hasSections = availableSections.length > 0;
+  const hasCustomSections = customSections.length > 0;
 
   return (
     <div className="space-y-6 w-full">
@@ -109,27 +201,42 @@ const PowerBiSettingsPage = () => {
             <Label htmlFor="secaoPowerBi">Secao do setor atual</Label>
             <Select
               value={selectedSection}
-              onValueChange={(value) => setSelectedSection(value as PowerBiSection)}
+              onValueChange={(value) => setSelectedSection(value)}
               disabled={!hasSections}
             >
               <SelectTrigger id="secaoPowerBi">
                 <SelectValue
                   placeholder={
-                    hasSections ? "Escolha qual secao deseja trocar" : "Nenhuma secao disponivel para este setor"
+                    hasSections
+                      ? "Escolha qual secao deseja trocar"
+                      : isItemsLoading
+                        ? "Carregando secoes..."
+                        : "Nenhuma secao disponivel para este setor"
                   }
                 />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>{sectorLabels[currentSector] ?? "Setor"}</SelectLabel>
-                  {availableSections.map((item) => (
-                    <SelectItem key={item.section} value={item.section}>
+                  {standardSections.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
                   ))}
                 </SelectGroup>
+                {hasCustomSections && (
+                  <SelectGroup>
+                    <SelectLabel>Itens personalizados</SelectLabel>
+                    {customSections.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
               </SelectContent>
             </Select>
+            {itemsError && <p className="text-sm text-red-500">{itemsError}</p>}
           </div>
 
           {selectedSection && (

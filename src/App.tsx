@@ -19,6 +19,8 @@ import RecuperarSenhaPage from "./pages/RecuperarSenhaPage";
 import NotFound from "./pages/NotFound";
 import SectorPage from "./pages/SectorPage";
 import SectorPanelPage from "./pages/SectorPanelPage";
+import SidebarItemsPage from "./pages/SidebarItemsPage";
+import SidebarItemDetailPage from "./pages/SidebarItemDetailPage";
 import { useTheme } from "./contexts/ThemeContext";
 
 const queryClient = new QueryClient();
@@ -65,11 +67,13 @@ const App = () => (
                 <Route path="operacional" element={<OperacionalPage />} />
               <Route path="consultoria/financeiro" element={<ConsultoriaFinanceiroPage />} />
               <Route path="financeiro" element={<FinanceiroPage />} />
+              <Route path="setor/:sectorId/custom/:itemId" element={<SidebarItemDetailPage />} />
               <Route path="setor/:sectorId/:panelId" element={<SectorPanelPage />} />
               <Route path="setor/avaliacao-ativos" element={<AvaliacaoAtivosPage />} />
               <Route path="setor/:sectorId" element={<SectorPage />} />
               <Route path="perfil" element={<PerfilPage />} />
               <Route path="powerbi" element={<PowerBiSettingsPage />} />
+              <Route path="itens-sidebar" element={<SidebarItemsPage />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
