@@ -202,9 +202,9 @@ const LandingPage = () => {
                   Núcleo de inteligência
                 </p>
                 <h1 className="login-banner-title text-3xl leading-tight sm:text-4xl lg:text-5xl">
-                  BI em estado líquido.
+                  Agroconsult.
                   <br />
-                  <span className="text-emerald-200">Sinais que viram ação.</span>
+                  
                 </h1>
                 <p className="max-w-md text-sm text-emerald-50/70 sm:text-base">
                   Dashboards, relatórios e indicadores críticos da Agroconsult em uma linha contínua de decisão.
