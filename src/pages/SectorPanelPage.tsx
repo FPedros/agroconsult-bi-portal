@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { usePowerBiLink } from "@/hooks/usePowerBiLink";
+import { sectorLabels } from "@/lib/sidebarMenu";
 import { cn } from "@/lib/utils";
 import { PowerBiPanel } from "@/lib/types";
 
@@ -9,6 +10,8 @@ const isValidPanel = (panel?: string): panel is PowerBiPanel =>
 
 const formatSector = (sectorId?: string) => {
   if (!sectorId) return "Setor";
+  const knownLabel = sectorLabels[sectorId];
+  if (knownLabel) return knownLabel;
   return sectorId
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -40,7 +43,7 @@ const SectorPanelPage = () => {
         </div>
         <div className={cn("flex-1", showFrame ? "overflow-hidden" : "flex items-center justify-center p-8 text-center")}>
           {!slug || !panel ? (
-            <p className="text-sm text-foreground">Setor ou painel invalido.</p>
+            <p className="text-sm text-foreground">Setor ou painel inválido.</p>
           ) : loading ? (
             <p>Carregando painel...</p>
           ) : error ? (

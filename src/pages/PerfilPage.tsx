@@ -10,7 +10,7 @@ const PerfilPage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="mb-2 text-3xl font-bold text-foreground">Gerenciar Cadastro</h1>
-        <p className="text-muted-foreground">Gerencie suas informacoes de perfil.</p>
+        <p className="text-muted-foreground">Gerencie suas informações de perfil.</p>
       </div>
 
       <div className="space-y-4 rounded-xl border border-border bg-card p-6">

@@ -15,7 +15,7 @@ const SidebarItemDetailPage = () => {
     const load = async () => {
       if (!itemId) {
         if (isActive) {
-          setError("Item invalido.");
+          setError("Item inválido.");
           setLoading(false);
         }
         return;
@@ -25,7 +25,7 @@ const SidebarItemDetailPage = () => {
         const data = await fetchSidebarItemById(itemId, sectorId);
         if (isActive) {
           if (!data) {
-            setError("Item nao encontrado.");
+            setError("Item não encontrado.");
           } else {
             setItem(data);
           }

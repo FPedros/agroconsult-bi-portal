@@ -129,7 +129,7 @@ const TestPage = () => {
   }, []);
 
   const consolePayload = loading
-    ? "Testando conexao..."
+    ? "Testando conexão..."
     : JSON.stringify(result ?? { error: "Sem dados" }, null, 2);
 
   return (

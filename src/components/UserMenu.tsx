@@ -36,7 +36,7 @@ const UserMenu = ({ collapsed = false }: UserMenuProps) => {
             "flex w-full items-center gap-2 px-2 hover:bg-sidebar-accent",
             collapsed ? "justify-center" : "justify-start",
           )}
-          aria-label={collapsed ? "Abrir menu do usuario" : undefined}
+          aria-label={collapsed ? "Abrir menu do usuário" : undefined}
         >
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20">
             <User className="h-4 w-4 text-primary" />

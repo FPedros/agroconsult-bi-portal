@@ -5,13 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   deleteSidebarItem,
   fetchSidebarItemsForSector,
   hideBuiltInSidebarItem,
@@ -23,8 +16,8 @@ import { getBaseMenuItemsBySector, getSectorFromPath, sectorLabels } from "@/lib
 
 const SidebarItemsPage = () => {
   const location = useLocation();
-  const initialSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
-  const [selectedSector, setSelectedSector] = useState(initialSector);
+  const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
+  const sectorLabel = sectorLabels[currentSector] ?? "Setor";
   const [items, setItems] = useState<SidebarMenuItem[]>([]);
   const [title, setTitle] = useState("");
   const [formError, setFormError] = useState("");
@@ -40,8 +33,8 @@ const SidebarItemsPage = () => {
       setIsLoading(true);
       setLoadError("");
       try {
-        const baseItems = getBaseMenuItemsBySector(selectedSector);
-        const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(selectedSector);
+        const baseItems = getBaseMenuItemsBySector(currentSector);
+        const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(currentSector);
         const visibleBase = baseItems
           .filter((item) => !hiddenPaths.has(item.path))
           .map((item) => ({
@@ -58,7 +51,7 @@ const SidebarItemsPage = () => {
         if (isActive) {
           setLoadError(message);
           setItems(
-            getBaseMenuItemsBySector(selectedSector).map((item) => ({
+            getBaseMenuItemsBySector(currentSector).map((item) => ({
               ...item,
               id: item.path,
               isCustom: false,
@@ -77,11 +70,11 @@ const SidebarItemsPage = () => {
     return () => {
       isActive = false;
     };
-  }, [selectedSector]);
+  }, [currentSector]);
 
   const refreshItems = async () => {
-    const baseItems = getBaseMenuItemsBySector(selectedSector);
-    const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(selectedSector);
+    const baseItems = getBaseMenuItemsBySector(currentSector);
+    const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(currentSector);
     const visibleBase = baseItems
       .filter((item) => !hiddenPaths.has(item.path))
       .map((item) => ({
@@ -96,21 +89,21 @@ const SidebarItemsPage = () => {
     const trimmedTitle = title.trim();
 
     if (!trimmedTitle) {
-      setFormError("Informe um titulo.");
+      setFormError("Informe um título.");
       return;
     }
 
     const hasTitle = items.some((item) => item.title.toLowerCase() === trimmedTitle.toLowerCase());
 
     if (hasTitle) {
-      setFormError("Ja existe um item com este titulo.");
+      setFormError("Já existe um item com este título.");
       return;
     }
 
     setIsSaving(true);
     setFormError("");
     try {
-      await insertCustomSidebarItem({ sector: selectedSector, title: trimmedTitle });
+      await insertCustomSidebarItem({ sector: currentSector, title: trimmedTitle });
       setTitle("");
       notifySidebarItemsUpdated();
       await refreshItems();
@@ -130,7 +123,7 @@ const SidebarItemsPage = () => {
         await deleteSidebarItem(item.id);
       } else {
         await hideBuiltInSidebarItem({
-          sector: selectedSector,
+          sector: currentSector,
           title: item.title,
           path: item.path,
         });
@@ -150,7 +143,7 @@ const SidebarItemsPage = () => {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-foreground">Gerenciar itens da sidebar</h1>
         <p className="text-sm text-muted-foreground">
-          Cadastre novos itens ou remova opcoes do menu lateral. Itens removidos podem ser cadastrados novamente.
+          Cadastre novos itens ou remova opções do menu lateral. Itens removidos podem ser cadastrados novamente.
         </p>
       </div>
 
@@ -158,27 +151,18 @@ const SidebarItemsPage = () => {
         <Card className="h-fit">
           <CardHeader>
             <CardTitle>Cadastrar item</CardTitle>
-            <CardDescription>Escolha o setor e informe o titulo. O caminho e gerado automaticamente.</CardDescription>
+            <CardDescription>
+              Cadastro sempre no setor atual ({sectorLabel}). Informe o título. O caminho é gerado automaticamente.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="sectorSelect">Setor</Label>
-              <Select value={selectedSector} onValueChange={setSelectedSector}>
-                <SelectTrigger id="sectorSelect">
-                  <SelectValue placeholder="Selecione o setor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(sectorLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="currentSector">Setor atual</Label>
+              <Input id="currentSector" value={sectorLabel} readOnly />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sidebarTitle">Titulo</Label>
+              <Label htmlFor="sidebarTitle">Título</Label>
               <Input
                 id="sidebarTitle"
                 value={title}
@@ -198,7 +182,7 @@ const SidebarItemsPage = () => {
         <Card>
           <CardHeader>
             <CardTitle>Itens atuais</CardTitle>
-            <CardDescription>Itens exibidos no menu lateral do setor selecionado.</CardDescription>
+            <CardDescription>Itens exibidos no menu lateral do setor atual ({sectorLabel}).</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {loadError && <p className="text-sm text-red-500">{loadError}</p>}
@@ -221,7 +205,7 @@ const SidebarItemsPage = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground">
-                      {item.isCustom ? "Personalizado" : "Padrao"}
+                      {item.isCustom ? "Personalizado" : "Padrão"}
                     </span>
                     <Button
                       type="button"

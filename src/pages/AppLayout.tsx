@@ -1,47 +1,62 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Building2, ClipboardList, Sprout, FolderKanban, PiggyBank, FlaskConical, Globe2 } from "lucide-react";
+import {
+  Building2,
+  ClipboardList,
+  Sprout,
+  FolderKanban,
+  PiggyBank,
+  FlaskConical,
+  Globe2,
+  Megaphone,
+} from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 
 const sectors = [
   {
     name: "AgroEconomics",
-    description: "Analises macro, mercado e competitividade.",
+    description: "Análises macro, mercado e competitividade.",
     path: "/app/setor/agroeconomics",
     icon: Globe2,
   },
   {
-    name: "Avaliacao de Ativos",
-    description: "Valuation, analise patrimonial e ativos estrategicos.",
+    name: "Avaliação de Ativos",
+    description: "Valuation, análise patrimonial e ativos estratégicos.",
     path: "/app/setor/avaliacao-ativos",
     icon: ClipboardList,
   },
   {
     name: "Consultoria",
-    description: "Dashboards de inteligencia de mercado e performance comercial.",
+    description: "Dashboards de inteligência de mercado e performance comercial.",
     path: "/app/comercial",
     icon: Building2,
   },
   {
-    name: "Desenvolvimento e Inovacao",
-    description: "Iniciativas, experimentacao e P&D.",
+    name: "Comunicação",
+    description: "Campanhas, branding e comunicação institucional.",
+    path: "/app/setor/comunicacao",
+    icon: Megaphone,
+  },
+  {
+    name: "Desenvolvimento e Inovação",
+    description: "Iniciativas, experimentação e P&D.",
     path: "/app/setor/desenvolvimento-inovacao",
     icon: FlaskConical,
   },
   {
     name: "Financeiro",
-    description: "Visao financeira, margens, custos e KPIs.",
+    description: "Visão financeira, margens, custos e KPIs.",
     path: "/app/financeiro",
     icon: PiggyBank,
   },
   {
     name: "Levantamento de Safra",
-    description: "Producao, produtividade e estimativas de safra.",
+    description: "Produção, produtividade e estimativas de safra.",
     path: "/app/setor/levantamento-safra",
     icon: Sprout,
   },
   {
     name: "Projetos",
-    description: "Portfolio, pipeline e execucao de projetos.",
+    description: "Portfólio, pipeline e execução de projetos.",
     path: "/app/setor/projetos",
     icon: FolderKanban,
   },
@@ -62,7 +77,7 @@ const AppLayout = () => {
               <div className="mb-6 space-y-2 text-center">
                 <h1 className="text-3xl font-bold text-foreground">Escolha o setor para continuar</h1>
                 <p className="text-muted-foreground">
-                  Selecione uma area para acessar os dashboards e navegacao especificos daquele setor.
+                  Selecione uma área para acessar os dashboards e a navegação específica daquele setor.
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

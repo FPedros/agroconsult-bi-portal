@@ -87,7 +87,7 @@ export async function upsertPowerBiLink(params: {
     }
 
     if (!data) {
-      throw new Error("Nao foi possivel criar o setor");
+      throw new Error("Não foi possível criar o setor.");
     }
 
     sector = data;
@@ -120,7 +120,7 @@ export async function upsertPowerBiLink(params: {
   }
 
   if (!data) {
-    throw new Error("Nao foi possivel salvar o link do Power BI");
+    throw new Error("Não foi possível salvar o link do Power BI.");
   }
 
   return data;

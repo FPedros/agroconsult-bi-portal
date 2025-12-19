@@ -10,7 +10,7 @@ const RecuperarSenhaPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implementar recuperação de senha com API
+    // TODO: Implementar recuperação de senha com API.
     console.log("Recuperar senha para:", email);
   };
 
@@ -22,11 +22,9 @@ const RecuperarSenhaPage = () => {
             <Leaf className="w-10 h-10 text-primary" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Recuperar Senha
-            </h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Recuperar senha</h1>
             <p className="text-muted-foreground text-sm">
-              Digite seu e-mail para receber instruções de recuperação
+              Digite seu e-mail para receber instruções de recuperação.
             </p>
           </div>
         </div>
@@ -54,20 +52,13 @@ const RecuperarSenhaPage = () => {
             Enviar instruções
           </Button>
 
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="w-full"
-          >
+          <Button type="button" variant="ghost" onClick={() => navigate("/")} className="w-full">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar ao login
           </Button>
         </form>
 
-        <p className="text-xs text-center text-muted-foreground mt-2">
-          * Funcionalidade em desenvolvimento
-        </p>
+        <p className="text-xs text-center text-muted-foreground mt-2">* Funcionalidade em desenvolvimento.</p>
       </div>
     </div>
   );

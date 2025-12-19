@@ -37,7 +37,7 @@ const LandingPage = () => {
       return;
     }
 
-    setError("E-mail ou senha invalidos.");
+    setError("E-mail ou senha inválidos.");
   };
 
   useEffect(() => {

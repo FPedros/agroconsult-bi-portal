@@ -7,6 +7,7 @@ import {
   PiggyBank,
   Sprout,
   FolderKanban,
+  Megaphone,
 } from "lucide-react";
 import { type PowerBiSection } from "@/contexts/PowerBiContext";
 
@@ -29,24 +30,26 @@ const sectorMenus: Record<string, BaseMenuItem[]> = {
   financeiro: [{ title: "Painel Financeiro", path: "/app/financeiro", powerBiKey: "financeiro-principal" }],
   "avaliacao-ativos": [
     {
-      title: "Avaliacao de Ativos",
+      title: "Avaliação de Ativos",
       path: "/app/setor/avaliacao-ativos",
       powerBiKey: "avaliacao-ativos",
     },
   ],
+  comunicacao: [{ title: "Comunicação", path: "/app/setor/comunicacao" }],
   "levantamento-safra": [{ title: "Levantamento de Safra", path: "/app/setor/levantamento-safra" }],
   projetos: [{ title: "Projetos", path: "/app/setor/projetos" }],
-  "desenvolvimento-inovacao": [{ title: "Desenvolvimento e Inovacao", path: "/app/setor/desenvolvimento-inovacao" }],
+  "desenvolvimento-inovacao": [{ title: "Desenvolvimento e Inovação", path: "/app/setor/desenvolvimento-inovacao" }],
   agroeconomics: [{ title: "AgroEconomics", path: "/app/setor/agroeconomics" }],
 };
 
 export const sectorLabels: Record<string, string> = {
   consultoria: "Consultoria",
   financeiro: "Financeiro",
-  "avaliacao-ativos": "Avaliacao de Ativos",
+  "avaliacao-ativos": "Avaliação de Ativos",
+  comunicacao: "Comunicação",
   "levantamento-safra": "Levantamento de Safra",
   projetos: "Projetos",
-  "desenvolvimento-inovacao": "Desenvolvimento e Inovacao",
+  "desenvolvimento-inovacao": "Desenvolvimento e Inovação",
   agroeconomics: "AgroEconomics",
 };
 
@@ -54,6 +57,7 @@ export const sectorIcons: Record<string, LucideIcon> = {
   consultoria: Building2,
   financeiro: PiggyBank,
   "avaliacao-ativos": ClipboardList,
+  comunicacao: Megaphone,
   "levantamento-safra": Sprout,
   projetos: FolderKanban,
   "desenvolvimento-inovacao": FlaskConical,

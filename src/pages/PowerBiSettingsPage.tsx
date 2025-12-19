@@ -136,7 +136,7 @@ const PowerBiSettingsPage = () => {
       if (selectedSection.startsWith(CUSTOM_PREFIX)) {
         const itemId = selectedSection.slice(CUSTOM_PREFIX.length);
         if (!itemId) {
-          toast({ title: "Erro", description: "Item personalizado invalido.", variant: "destructive" });
+          toast({ title: "Erro", description: "Item personalizado inválido.", variant: "destructive" });
           return;
         }
 
@@ -147,7 +147,7 @@ const PowerBiSettingsPage = () => {
         });
       } else {
         if (!(selectedSection in POWER_BI_SECTIONS)) {
-          toast({ title: "Erro", description: "Secao invalida.", variant: "destructive" });
+          toast({ title: "Erro", description: "Seção inválida.", variant: "destructive" });
           return;
         }
 
@@ -155,7 +155,7 @@ const PowerBiSettingsPage = () => {
         if (!parsed) {
           toast({
             title: "Erro",
-            description: "Nao foi possivel identificar setor/painel para esta secao.",
+            description: "Não foi possível identificar setor/painel para esta seção.",
             variant: "destructive",
           });
           return;
@@ -191,14 +191,14 @@ const PowerBiSettingsPage = () => {
       <div>
         <h1 className="mb-2 text-3xl font-bold text-foreground">Alterar Power BI</h1>
         <p className="text-muted-foreground">
-          Selecione a secao do setor atual ({sectorLabels[currentSector] ?? "Setor"}) e atualize o link do painel.
+          Selecione a seção do setor atual ({sectorLabels[currentSector] ?? "Setor"}) e atualize o link do painel.
         </p>
       </div>
 
       <div className="space-y-4 rounded-xl border border-border bg-card p-6">
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label htmlFor="secaoPowerBi">Secao do setor atual</Label>
+            <Label htmlFor="secaoPowerBi">Seção do setor atual</Label>
             <Select
               value={selectedSection}
               onValueChange={(value) => setSelectedSection(value)}
@@ -208,10 +208,10 @@ const PowerBiSettingsPage = () => {
                 <SelectValue
                   placeholder={
                     hasSections
-                      ? "Escolha qual secao deseja trocar"
+                      ? "Escolha qual seção deseja trocar"
                       : isItemsLoading
-                        ? "Carregando secoes..."
-                        : "Nenhuma secao disponivel para este setor"
+                        ? "Carregando seções..."
+                        : "Nenhuma seção disponível para este setor"
                   }
                 />
               </SelectTrigger>

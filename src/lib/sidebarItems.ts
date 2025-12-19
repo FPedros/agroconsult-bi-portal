@@ -143,7 +143,7 @@ export const insertCustomSidebarItem = async (params: { sector: string; title: s
   }
 
   if (!data) {
-    throw new Error("Nao foi possivel salvar o item da sidebar");
+    throw new Error("Não foi possível salvar o item da sidebar.");
   }
 
   return mapToCustomItem(data);
