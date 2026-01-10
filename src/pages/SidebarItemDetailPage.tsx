@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { fetchSidebarItemById, type SidebarCustomItem } from "@/lib/sidebarItems";
+import { Button } from "@/components/ui/button";
 
 const SidebarItemDetailPage = () => {
   const { itemId, sectorId } = useParams<{ itemId: string; sectorId: string }>();
@@ -50,7 +51,7 @@ const SidebarItemDetailPage = () => {
   }, [itemId]);
 
   const title = item?.title ?? "Item da sidebar";
-  const hasLink = Boolean(item?.powerBiUrl);
+  const showFrame = !loading && !error && Boolean(item?.powerBiUrl);
 
   return (
     <div className="flex h-full w-full min-h-0">
@@ -58,15 +59,20 @@ const SidebarItemDetailPage = () => {
         <div className="border-b border-border px-4 py-3">
           <p className="text-sm font-semibold text-foreground">{title}</p>
         </div>
-        <div className={cn("flex-1", hasLink ? "overflow-hidden" : "flex items-center justify-center p-8 text-center")}>
+        <div className={cn("flex-1", showFrame ? "overflow-hidden" : "flex items-center justify-center p-8 text-center")}>
           {loading ? (
-            <p className="text-sm text-muted-foreground">Carregando item...</p>
+            <p>Carregando item...</p>
           ) : error ? (
-            <p className="text-sm text-red-500">{error}</p>
-          ) : !hasLink ? (
-            <p className="text-muted-foreground">Nenhum link do Power BI configurado.</p>
+            <p style={{ color: "red" }}>Erro: {error}</p>
+          ) : !item?.powerBiUrl ? (
+            <div className="space-y-4">
+              <p>Nenhum link do Power BI configurado.</p>
+              <Button asChild>
+                <Link to="/app/powerbi" state={{ selectedItemId: item?.id, selectedItemTitle: item?.title }}>Inserir Power BI</Link>
+              </Button>
+            </div>
           ) : (
-            <iframe src={item?.powerBiUrl} className="h-full w-full" title={title} allowFullScreen />
+            <iframe src={item.powerBiUrl} className="h-full w-full" title={title} allowFullScreen />
           )}
         </div>
       </div>

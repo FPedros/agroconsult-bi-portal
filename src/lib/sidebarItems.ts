@@ -15,6 +15,7 @@ export type SidebarMenuItem = {
   path: string;
   powerBiKey?: PowerBiSection;
   isCustom: boolean;
+  isProtected?: boolean;
 };
 
 type SidebarDbItem = {
@@ -34,9 +35,24 @@ const nowIso = () => new Date().toISOString();
 const sanitizePowerBiValue = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return "";
+  
+  // Extrai URL do iframe se for um iframe completo
   const match = trimmed.match(/src=["']([^"']+)["']/i);
-  if (match?.[1]) return match[1];
-  return trimmed;
+  const url = match?.[1] || trimmed;
+  
+  // Valida se é um link do Power BI
+  try {
+    const urlObj = new URL(url);
+    if (!urlObj.hostname.includes('powerbi.com')) {
+      throw new Error('O link deve ser do Power BI (app.powerbi.com)');
+    }
+    return url;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('powerbi.com')) {
+      throw error;
+    }
+    throw new Error('Link inválido. Cole a URL completa ou o iframe do Power BI.');
+  }
 };
 
 export const SIDEBAR_ITEMS_EVENT = "sidebar-items-updated";
@@ -101,11 +117,19 @@ export const fetchSidebarItemById = async (id: string, sector?: string): Promise
 export const fetchSidebarItemsForSector = async (sector: string): Promise<{
   customItems: SidebarMenuItem[];
   hiddenPaths: Set<string>;
+  renamedTitles: Map<string, string>;
 }> => {
   const items = await fetchSidebarItemsBySector(sector);
   const hiddenPaths = new Set(
     items.filter((item) => !item.is_custom && item.is_hidden).map((item) => item.path),
   );
+  
+  const renamedTitles = new Map(
+    items
+      .filter((item) => !item.is_custom && !item.is_hidden && item.id.startsWith("renamed:"))
+      .map((item) => [item.path, item.title])
+  );
+  
   const customItems = items
     .filter((item) => item.is_custom && !item.is_hidden)
     .map((item) => ({
@@ -115,7 +139,7 @@ export const fetchSidebarItemsForSector = async (sector: string): Promise<{
       isCustom: true,
     }));
 
-  return { customItems, hiddenPaths };
+  return { customItems, hiddenPaths, renamedTitles };
 };
 
 export const insertCustomSidebarItem = async (params: { sector: string; title: string }): Promise<SidebarCustomItem> => {
@@ -169,6 +193,48 @@ export const updateSidebarItemLink = async (id: string, url: string) => {
   }
 
   return safeUrl;
+};
+
+export const updateSidebarItemTitle = async (id: string, title: string) => {
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) {
+    throw new Error("O título não pode estar vazio.");
+  }
+
+  const { error } = await supabase
+    .from<SidebarDbItem>("sidebar_items")
+    .update({ title: trimmedTitle, updated_at: nowIso() })
+    .eq("id", id)
+    .eq("is_custom", true);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return trimmedTitle;
+};
+
+export const updateBaseItemTitle = async (params: { sector: string; path: string; newTitle: string }) => {
+  const now = nowIso();
+  const id = `renamed:${params.sector}:${params.path}`;
+  
+  const payload: SidebarDbItem = {
+    id,
+    sector: params.sector,
+    title: params.newTitle.trim(),
+    path: params.path,
+    is_custom: false,
+    is_hidden: false,
+    created_at: now,
+    updated_at: now,
+  };
+
+  const { error } = await supabase.from<SidebarDbItem>("sidebar_items").upsert(payload, { onConflict: "id" });
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return params.newTitle.trim();
 };
 
 export const hideBuiltInSidebarItem = async (params: { sector: string; title: string; path: string }) => {

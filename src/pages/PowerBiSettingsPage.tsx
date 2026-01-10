@@ -5,9 +5,7 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -29,11 +27,13 @@ const CUSTOM_PREFIX = "custom:";
 
 const PowerBiSettingsPage = () => {
   const location = useLocation();
+  const locationState = location.state as { selectedItemId?: string; selectedItemTitle?: string } | null;
   const [selectedSection, setSelectedSection] = useState("");
   const [newLink, setNewLink] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [customItems, setCustomItems] = useState<SidebarMenuItem[]>([]);
   const [hiddenPaths, setHiddenPaths] = useState<string[]>([]);
+  const [renamedTitles, setRenamedTitles] = useState<Map<string, string>>(new Map());
   const [itemsError, setItemsError] = useState("");
   const [isItemsLoading, setIsItemsLoading] = useState(false);
 
@@ -46,12 +46,13 @@ const PowerBiSettingsPage = () => {
       setIsItemsLoading(true);
       setItemsError("");
       try {
-        const { customItems: fetchedCustomItems, hiddenPaths: hidden } = await fetchSidebarItemsForSector(
+        const { customItems: fetchedCustomItems, hiddenPaths: hidden, renamedTitles: renamed } = await fetchSidebarItemsForSector(
           currentSector,
         );
         if (isActive) {
           setCustomItems(fetchedCustomItems);
           setHiddenPaths(Array.from(hidden));
+          setRenamedTitles(renamed);
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Erro ao carregar itens da sidebar.";
@@ -59,6 +60,7 @@ const PowerBiSettingsPage = () => {
           setItemsError(message);
           setCustomItems([]);
           setHiddenPaths([]);
+          setRenamedTitles(new Map());
         }
       } finally {
         if (isActive) {
@@ -81,12 +83,16 @@ const PowerBiSettingsPage = () => {
       .map((item) => item.powerBiKey)
       .filter((key): key is PowerBiSection => Boolean(key) && key in POWER_BI_SECTIONS);
     const uniqueKeys = Array.from(new Set(keys));
-    return uniqueKeys.map((section) => ({
-      value: section,
-      label: POWER_BI_SECTIONS[section].label,
-      kind: "padrao",
-    }));
-  }, [currentSector, hiddenPaths]);
+    return uniqueKeys.map((section) => {
+      const item = items.find(i => i.powerBiKey === section);
+      const title = item ? (renamedTitles.get(item.path) || item.title) : POWER_BI_SECTIONS[section].label;
+      return {
+        value: section,
+        label: title,
+        kind: "padrao",
+      };
+    });
+  }, [currentSector, hiddenPaths, renamedTitles]);
 
   const customSections = useMemo<SectionOption[]>(
     () =>
@@ -105,9 +111,19 @@ const PowerBiSettingsPage = () => {
 
   useEffect(() => {
     if (!availableSections.some((item) => item.value === selectedSection)) {
+      // Se veio de um item específico, tenta selecionar ele
+      if (locationState?.selectedItemId) {
+        const customValue = `${CUSTOM_PREFIX}${locationState.selectedItemId}`;
+        const foundItem = availableSections.find(item => item.value === customValue);
+        if (foundItem) {
+          setSelectedSection(customValue);
+          return;
+        }
+      }
+      // Caso contrário, seleciona o primeiro disponível
       setSelectedSection(availableSections[0]?.value ?? "");
     }
-  }, [availableSections, selectedSection]);
+  }, [availableSections, selectedSection, locationState]);
 
   const parseSection = (section: PowerBiSection): { sectorSlug: string; panel: PowerBiPanel } | null => {
     const panels: PowerBiPanel[] = ["comercial", "operacional", "financeiro", "principal"];
@@ -184,12 +200,11 @@ const PowerBiSettingsPage = () => {
   };
 
   const hasSections = availableSections.length > 0;
-  const hasCustomSections = customSections.length > 0;
 
   return (
     <div className="space-y-6 w-full">
       <div>
-        <h1 className="mb-2 text-3xl font-bold text-foreground">Alterar Power BI</h1>
+        <h1 className="mb-2 text-3xl font-bold text-foreground">Inserir Power BI</h1>
         <p className="text-muted-foreground">
           Selecione a seção do setor atual ({sectorLabels[currentSector] ?? "Setor"}) e atualize o link do painel.
         </p>
@@ -216,24 +231,16 @@ const PowerBiSettingsPage = () => {
                 />
               </SelectTrigger>
               <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>{sectorLabels[currentSector] ?? "Setor"}</SelectLabel>
-                  {standardSections.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-                {hasCustomSections && (
-                  <SelectGroup>
-                    <SelectLabel>Itens personalizados</SelectLabel>
-                    {customSections.map((item) => (
-                      <SelectItem key={item.value} value={item.value}>
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                )}
+                {standardSections.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+                {customSections.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             {itemsError && <p className="text-sm text-red-500">{itemsError}</p>}

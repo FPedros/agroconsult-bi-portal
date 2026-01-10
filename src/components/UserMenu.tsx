@@ -79,7 +79,7 @@ const UserMenu = ({ collapsed = false }: UserMenuProps) => {
           className="cursor-pointer"
         >
           <BarChart3 className="mr-2 h-4 w-4" />
-          <span>Alterar Power BI</span>
+          <span>Inserir Power BI</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => navigate("/app/itens-sidebar")}

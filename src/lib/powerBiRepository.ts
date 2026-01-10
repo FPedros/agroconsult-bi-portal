@@ -4,9 +4,24 @@ import { PowerBiLink, PowerBiPanel, Sector } from "./types";
 const sanitizePowerBiValue = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return "";
+  
+  // Extrai URL do iframe se for um iframe completo
   const match = trimmed.match(/src=["']([^"']+)["']/i);
-  if (match?.[1]) return match[1];
-  return trimmed;
+  const url = match?.[1] || trimmed;
+  
+  // Valida se é um link do Power BI
+  try {
+    const urlObj = new URL(url);
+    if (!urlObj.hostname.includes('powerbi.com')) {
+      throw new Error('O link deve ser do Power BI (app.powerbi.com)');
+    }
+    return url;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('powerbi.com')) {
+      throw error;
+    }
+    throw new Error('Link inválido. Cole a URL completa ou o iframe do Power BI.');
+  }
 };
 
 const nowIso = () => new Date().toISOString();

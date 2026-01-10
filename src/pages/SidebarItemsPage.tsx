@@ -10,13 +10,13 @@ import {
   hideBuiltInSidebarItem,
   insertCustomSidebarItem,
   notifySidebarItemsUpdated,
+  updateBaseItemTitle,
+  updateSidebarItemTitle,
   type SidebarMenuItem,
 } from "@/lib/sidebarItems";
 import { getBaseMenuItemsBySector, getSectorFromPath, sectorLabels } from "@/lib/sidebarMenu";
 
 const PROTECTED_PATHS = new Set(["/app/relatorios"]);
-
-const isProtectedPath = (path: string) => PROTECTED_PATHS.has(path);
 
 const SidebarItemsPage = () => {
   const location = useLocation();
@@ -29,6 +29,8 @@ const SidebarItemsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   useEffect(() => {
     let isActive = true;
@@ -38,29 +40,27 @@ const SidebarItemsPage = () => {
       setLoadError("");
       try {
         const baseItems = getBaseMenuItemsBySector(currentSector);
-        const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(currentSector);
+        const { customItems, hiddenPaths, renamedTitles } = await fetchSidebarItemsForSector(currentSector);
+        
+        // Incluir itens base que não foram ocultados (exceto os protegidos que sempre aparecem)
         const visibleBase = baseItems
-          .filter((item) => !hiddenPaths.has(item.path) || isProtectedPath(item.path))
+          .filter((item) => !hiddenPaths.has(item.path) || PROTECTED_PATHS.has(item.path))
           .map((item) => ({
             ...item,
             id: item.path,
+            title: renamedTitles.get(item.path) || item.title,
             isCustom: false,
+            isProtected: PROTECTED_PATHS.has(item.path),
           }));
 
         if (isActive) {
-          setItems([...visibleBase, ...customItems]);
+          setItems([...visibleBase, ...customItems.map(item => ({ ...item, isProtected: false }))]);
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Erro ao carregar itens da sidebar.";
         if (isActive) {
           setLoadError(message);
-          setItems(
-            getBaseMenuItemsBySector(currentSector).map((item) => ({
-              ...item,
-              id: item.path,
-              isCustom: false,
-            })),
-          );
+          setItems([]);
         }
       } finally {
         if (isActive) {
@@ -78,15 +78,19 @@ const SidebarItemsPage = () => {
 
   const refreshItems = async () => {
     const baseItems = getBaseMenuItemsBySector(currentSector);
-    const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(currentSector);
+    const { customItems, hiddenPaths, renamedTitles } = await fetchSidebarItemsForSector(currentSector);
+    
     const visibleBase = baseItems
-      .filter((item) => !hiddenPaths.has(item.path) || isProtectedPath(item.path))
+      .filter((item) => !hiddenPaths.has(item.path) || PROTECTED_PATHS.has(item.path))
       .map((item) => ({
         ...item,
         id: item.path,
+        title: renamedTitles.get(item.path) || item.title,
         isCustom: false,
+        isProtected: PROTECTED_PATHS.has(item.path),
       }));
-    setItems([...visibleBase, ...customItems]);
+    
+    setItems([...visibleBase, ...customItems.map(item => ({ ...item, isProtected: false }))]);
   };
 
   const handleAdd = async () => {
@@ -121,10 +125,11 @@ const SidebarItemsPage = () => {
 
   const handleRemove = async (item: SidebarMenuItem) => {
     setFormError("");
-    if (!item.isCustom && isProtectedPath(item.path)) {
+    if (item.isProtected) {
       setFormError("O item Relatórios é fixo e não pode ser removido.");
       return;
     }
+    
     setRemovingId(item.id);
     try {
       if (item.isCustom) {
@@ -143,6 +148,60 @@ const SidebarItemsPage = () => {
       setFormError(message);
     } finally {
       setRemovingId(null);
+    }
+  };
+
+  const handleStartEdit = (item: SidebarMenuItem) => {
+    setEditingId(item.id);
+    setEditingTitle(item.title);
+    setFormError("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingTitle("");
+    setFormError("");
+  };
+
+  const handleSaveEdit = async (item: SidebarMenuItem) => {
+    const trimmedTitle = editingTitle.trim();
+
+    if (!trimmedTitle) {
+      setFormError("O título não pode estar vazio.");
+      return;
+    }
+
+    if (trimmedTitle === item.title) {
+      handleCancelEdit();
+      return;
+    }
+
+    const hasTitle = items.some(
+      (i) => i.id !== item.id && i.title.toLowerCase() === trimmedTitle.toLowerCase()
+    );
+
+    if (hasTitle) {
+      setFormError("Já existe um item com este título.");
+      return;
+    }
+
+    setFormError("");
+    try {
+      if (item.isCustom) {
+        await updateSidebarItemTitle(item.id, trimmedTitle);
+      } else {
+        await updateBaseItemTitle({
+          sector: currentSector,
+          path: item.path,
+          newTitle: trimmedTitle,
+        });
+      }
+      notifySidebarItemsUpdated();
+      await refreshItems();
+      handleCancelEdit();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao renomear item.";
+      setFormError(message);
     }
   };
 
@@ -204,28 +263,76 @@ const SidebarItemsPage = () => {
               </div>
             ) : (
               items.map((item) => {
-                const isProtected = !item.isCustom && isProtectedPath(item.path);
+                const isEditing = editingId === item.id;
+                
                 return (
                   <div
                     key={item.id}
                     className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card/70 px-4 py-3"
                   >
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-foreground">{item.title}</p>
-                    </div>
+                    {isEditing ? (
+                      <div className="flex-1 space-y-2">
+                        <Input
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          placeholder="Novo título"
+                          className="w-full"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">{item.title}</p>
+                      </div>
+                    )}
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground">
-                        {item.isCustom ? "Personalizado" : isProtected ? "Fixo" : "Padrão"}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRemove(item)}
-                        disabled={removingId === item.id || isProtected}
-                      >
-                        {removingId === item.id ? "Removendo..." : "Remover"}
-                      </Button>
+                      {!isEditing && (
+                        <span className="text-xs text-muted-foreground">
+                          {item.isProtected ? "Fixo" : item.isCustom ? "Personalizado" : "Padrão"}
+                        </span>
+                      )}
+                      {isEditing ? (
+                        <>
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleSaveEdit(item)}
+                          >
+                            Salvar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                          >
+                            Cancelar
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          {!item.isProtected && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleStartEdit(item)}
+                              disabled={removingId === item.id}
+                            >
+                              Renomear
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemove(item)}
+                            disabled={removingId === item.id || item.isProtected}
+                          >
+                            {removingId === item.id ? "Removendo..." : "Remover"}
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );

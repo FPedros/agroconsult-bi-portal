@@ -165,61 +165,11 @@ const LandingPage = () => {
     >
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full z-0 pointer-events-none" aria-hidden="true" />
 
-      <div className="relative z-20 w-full max-w-5xl overflow-hidden rounded-2xl border backdrop-blur-xl shadow-2xl text-white login-body login-card">
-        <div className="grid md:grid-cols-[1.1fr_0.9fr]">
-          <div className="relative overflow-hidden p-8 md:p-10 login-left">
-            <div className="absolute -left-16 -top-24 h-64 w-64 rounded-full bg-[#78FFD2]/20 blur-3xl" />
-            <div className="absolute -right-10 -bottom-20 h-56 w-56 rounded-full bg-[#00D08A]/20 blur-3xl" />
-            <div
-              className="absolute inset-0 opacity-25"
-              style={{
-                backgroundImage:
-                  "linear-gradient(120deg, rgba(120, 255, 210, 0.18), transparent 45%), linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px)",
-                backgroundSize: "auto, 100% 18px",
-              }}
-            />
-            <div className="absolute right-6 top-6 rotate-6 rounded-full border border-[#78FFD2]/30 bg-[#78FFD2]/10 px-3 py-1 text-[0.6rem] uppercase tracking-[0.4em] text-[#D7FFF1]/80">
-              Acesso restrito
-            </div>
-
-            <div className="relative flex h-full flex-col gap-8">
-              <div className="flex items-center gap-3">
-                <img src="/agroconsult.png" alt="Agroconsult" className="h-10 object-contain" />
-                <div>
-                  <p className="text-[0.6rem] uppercase tracking-[0.45em] text-[#BFFFE9]/80">Agroconsult</p>
-                  <p className="text-sm text-white/70">Business Insights Portal</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-[0.7rem] uppercase tracking-[0.5em] text-[#BFFFE9]/70">
-                  Núcleo de inteligência
-                </p>
-                <h1 className="login-banner-title text-3xl leading-tight sm:text-4xl lg:text-5xl">
-                  Agroconsult.
-                  <br />
-                  
-                </h1>
-                <p className="max-w-md text-sm text-[#D7FFF1]/70 sm:text-base">
-                  Dashboards, relatórios e indicadores críticos da Agroconsult em uma linha contínua de decisão.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2 text-xs text-[#D7FFF1]/70">
-                <span className="rounded-full border border-[#78FFD2]/35 px-3 py-1">Mercado</span>
-                <span className="rounded-full border border-[#78FFD2]/35 px-3 py-1">Safra</span>
-                <span className="rounded-full border border-[#78FFD2]/35 px-3 py-1">Operações</span>
-                <span className="rounded-full border border-[#78FFD2]/35 px-3 py-1">Financeiro</span>
-              </div>
-            </div>
+      <div className="relative z-20 w-full max-w-md overflow-hidden rounded-2xl border backdrop-blur-xl shadow-2xl text-white login-body login-card">
+        <div className="flex flex-col gap-6 p-8 md:p-10 login-right">
+          <div className="flex justify-center mb-6">
+            <img src="/agroconsult.png" alt="Agroconsult" className="h-12 object-contain" />
           </div>
-
-          <div className="flex flex-col gap-6 border-t p-8 md:border-l md:border-t-0 md:p-10 login-right">
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.4em] text-white/60">Acesso</p>
-              <h2 className="text-2xl font-semibold">Entrar no portal</h2>
-              <p className="text-sm text-white/60">Use suas credenciais para continuar.</p>
-            </div>
 
             <form onSubmit={handleEntrar} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
@@ -264,7 +214,6 @@ const LandingPage = () => {
             </form>
 
             <p className="text-xs text-center text-white/50">Agroconsult. Todos os direitos reservados.</p>
-          </div>
         </div>
       </div>
       <style>{`
@@ -280,27 +229,17 @@ const LandingPage = () => {
 
         .login-card {
           background: linear-gradient(
-            135deg,
-            rgba(18, 27, 56, 0.88) 0%,
-            rgba(16, 45, 60, 0.9) 52%,
-            rgba(10, 56, 40, 0.86) 100%
-          );
-          border-color: rgba(120, 255, 210, 0.18);
-          box-shadow: 0 25px 80px rgba(6, 14, 32, 0.6);
-        }
-
-        .login-left {
-          background: linear-gradient(
             140deg,
             rgba(32, 41, 86, 0.45) 0%,
             rgba(26, 68, 95, 0.38) 45%,
             rgba(0, 135, 71, 0.2) 100%
           );
+          border-color: rgba(120, 255, 210, 0.18);
+          box-shadow: 0 25px 80px rgba(6, 14, 32, 0.6);
         }
 
         .login-right {
-          background: linear-gradient(165deg, rgba(11, 21, 44, 0.65), rgba(8, 35, 40, 0.45));
-          border-color: rgba(120, 255, 210, 0.12);
+          background: transparent;
         }
       `}</style>
     </div>

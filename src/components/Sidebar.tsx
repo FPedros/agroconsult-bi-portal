@@ -50,12 +50,13 @@ const Sidebar = () => {
       }
 
       try {
-        const { customItems, hiddenPaths } = await fetchSidebarItemsForSector(currentSector);
+        const { customItems, hiddenPaths, renamedTitles } = await fetchSidebarItemsForSector(currentSector);
         const visibleBase = baseItems
           .filter((item) => !hiddenPaths.has(item.path) || isProtectedPath(item.path))
           .map((item) => ({
             ...item,
             id: item.path,
+            title: renamedTitles.get(item.path) || item.title,
             isCustom: false,
           }));
 
