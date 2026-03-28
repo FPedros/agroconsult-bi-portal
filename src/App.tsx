@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { UserProvider, useUser } from "./contexts/UserContext";
-import { PowerBiProvider } from "./contexts/PowerBiContext";
 import LandingPage from "./pages/LandingPage";
 import AppLayout from "./pages/AppLayout";
 import ComercialPage from "./pages/ComercialPage";
@@ -22,7 +21,9 @@ import SectorPanelPage from "./pages/SectorPanelPage";
 import SidebarItemsPage from "./pages/SidebarItemsPage";
 import SidebarItemDetailPage from "./pages/SidebarItemDetailPage";
 import RelatoriosPage from "./pages/RelatoriosPage";
+import GerenciarRelatoriosPage from "./pages/GerenciarRelatoriosPage";
 import { useTheme } from "./contexts/ThemeContext";
+import { canUserAccessPath, getUserDefaultSectorPath } from "@/lib/access";
 
 const queryClient = new QueryClient();
 
@@ -43,9 +44,16 @@ const ThemeApplier = () => {
 
 const ProtectedAppLayout = () => {
   const { user } = useUser();
+  const location = useLocation();
 
   if (!user) {
     return <Navigate to="/" replace />;
+  }
+
+  const defaultPath = getUserDefaultSectorPath(user);
+
+  if (!canUserAccessPath(user, location.pathname)) {
+    return <Navigate to={defaultPath} replace />;
   }
 
   return <AppLayout />;
@@ -54,35 +62,34 @@ const ProtectedAppLayout = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <UserProvider>
-      <PowerBiProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ThemeApplier />
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
-              <Route path="/app" element={<ProtectedAppLayout />}>
-                <Route path="comercial" element={<ComercialPage />} />
-                <Route path="operacional" element={<OperacionalPage />} />
-              <Route path="consultoria/financeiro" element={<ConsultoriaFinanceiroPage />} />
-              <Route path="financeiro" element={<FinanceiroPage />} />
-              <Route path="setor/:sectorId/custom/:itemId" element={<SidebarItemDetailPage />} />
-              <Route path="setor/:sectorId/:panelId" element={<SectorPanelPage />} />
-              <Route path="setor/avaliacao-ativos" element={<AvaliacaoAtivosPage />} />
-              <Route path="setor/:sectorId" element={<SectorPage />} />
-              <Route path="perfil" element={<PerfilPage />} />
-              <Route path="powerbi" element={<PowerBiSettingsPage />} />
-              <Route path="itens-sidebar" element={<SidebarItemsPage />} />
-              <Route path="relatorios" element={<RelatoriosPage />} />
-            </Route>
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </PowerBiProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ThemeApplier />
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
+            <Route path="/app" element={<ProtectedAppLayout />}>
+              <Route path="comercial" element={<ComercialPage />} />
+              <Route path="operacional" element={<OperacionalPage />} />
+            <Route path="consultoria/financeiro" element={<ConsultoriaFinanceiroPage />} />
+            <Route path="financeiro" element={<FinanceiroPage />} />
+            <Route path="setor/:sectorId/custom/:itemId" element={<SidebarItemDetailPage />} />
+            <Route path="setor/:sectorId/:panelId" element={<SectorPanelPage />} />
+            <Route path="setor/avaliacao-ativos" element={<AvaliacaoAtivosPage />} />
+            <Route path="setor/:sectorId" element={<SectorPage />} />
+            <Route path="perfil" element={<PerfilPage />} />
+            <Route path="powerbi" element={<PowerBiSettingsPage />} />
+            <Route path="itens-sidebar" element={<SidebarItemsPage />} />
+            <Route path="relatorios/gerenciar" element={<GerenciarRelatoriosPage />} />
+            <Route path="relatorios" element={<RelatoriosPage />} />
+          </Route>
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
     </UserProvider>
   </QueryClientProvider>
 );

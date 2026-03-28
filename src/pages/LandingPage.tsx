@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUser } from "@/contexts/UserContext";
+import { getUserDefaultSectorPath } from "@/lib/access";
+import { authenticateMvpUser } from "@/lib/mvpUsers";
 
 type NeuralNode = {
   x: number;
@@ -17,13 +19,14 @@ type NeuralNode = {
 const LandingPage = () => {
   const navigate = useNavigate();
   const { setUser } = useUser();
-  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const handleEntrar = (e: React.FormEvent) => {
     e.preventDefault();
+<<<<<<< HEAD
     const normalizedEmail = email.trim().toLowerCase();
     const isValidUser =
       (normalizedEmail === "teste@agroconsult.com.br" && (senha === "1234" || senha === "Agro#2025!")) ||
@@ -52,12 +55,18 @@ const LandingPage = () => {
         };
       }
       setUser(userData);
+=======
+    const authenticatedUser = authenticateMvpUser(login, senha);
+
+    if (authenticatedUser) {
+      setUser(authenticatedUser);
+>>>>>>> 52fa473 (tst)
       setError("");
-      navigate("/app");
+      navigate(getUserDefaultSectorPath(authenticatedUser));
       return;
     }
 
-    setError("E-mail ou senha inválidos.");
+    setError("Login ou senha inválidos.");
   };
 
   useEffect(() => {
@@ -191,6 +200,7 @@ const LandingPage = () => {
 
             <form onSubmit={handleEntrar} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
+<<<<<<< HEAD
                 <label htmlFor="inpEmail" className="text-sm font-medium text-white/90">
                   Usuário ou E-mail
                 </label>
@@ -200,6 +210,17 @@ const LandingPage = () => {
                   placeholder="usuario ou seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+=======
+                <label htmlFor="inpLogin" className="text-sm font-medium text-white/90">
+                  Login
+                </label>
+                <Input
+                  id="inpLogin"
+                  type="text"
+                  placeholder="seu.login"
+                  value={login}
+                  onChange={(e) => setLogin(e.target.value)}
+>>>>>>> 52fa473 (tst)
                   className="bg-white/5 border-white/15 text-white placeholder:text-white/45 focus:ring-[#78FFD2]/60 focus:border-[#78FFD2]/40"
                   required
                 />

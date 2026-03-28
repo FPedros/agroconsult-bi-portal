@@ -166,10 +166,10 @@ const Sidebar = () => {
             "flex items-center gap-2 px-2 text-sidebar-foreground hover:bg-sidebar-accent",
             isCollapsed ? "justify-center" : "justify-start",
           )}
-          aria-label={isCollapsed ? "Selecionar outro setor" : undefined}
+          aria-label={isCollapsed ? "Voltar ao início" : undefined}
         >
           <ChevronLeft className="h-4 w-4" />
-          {!isCollapsed && <span className="text-sm font-medium">Escolher outro setor</span>}
+          {!isCollapsed && <span className="text-sm font-medium">Voltar ao início</span>}
         </Button>
         <UserMenu collapsed={isCollapsed} />
       </div>

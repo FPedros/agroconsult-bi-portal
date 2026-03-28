@@ -1,16 +1,19 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Building2,
-  ClipboardList,
-  Sprout,
-  FolderKanban,
-  PiggyBank,
-  FlaskConical,
-  Globe2,
-  Megaphone,
+  ArrowRight,
+  ChevronLeft,
+  BarChart3,
+  BookOpenText,
+  CircleGauge,
+  FileText,
+  type LucideIcon,
+  Wallet,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import UserMenu from "@/components/UserMenu";
+import { fetchSidebarItemsForSector, SIDEBAR_ITEMS_EVENT, type SidebarMenuItem } from "@/lib/sidebarItems";
+import { getBaseMenuItemsBySector } from "@/lib/sidebarMenu";
 
 type NeuralNode = {
   x: number;
@@ -22,66 +25,148 @@ type NeuralNode = {
   pulseSpeed: number;
 };
 
-const sectors = [
+const HOME_MENU_SECTOR = "agroeconomics";
+const REPORTS_PATH = "/app/relatorios";
+
+const HOME_CARD_CONFIG: Record<
+  string,
   {
-    name: "AgroEconomics",
-    description: "Análises macro, mercado e competitividade.",
-    path: "/app/setor/agroeconomics",
-    icon: Globe2,
+    description: string;
+    icon: LucideIcon;
+  }
+> = {
+  "/app/setor/agroeconomics/comercial": {
+    description: "Acompanhe indicadores comerciais e movimentos de mercado.",
+    icon: BarChart3,
   },
-  {
-    name: "Avaliação de Ativos",
-    description: "Valuation, análise patrimonial e ativos estratégicos.",
-    path: "/app/setor/avaliacao-ativos",
-    icon: ClipboardList,
+  "/app/setor/agroeconomics/operacional": {
+    description: "Monitore a operação, ritmo de execução e eficiência.",
+    icon: CircleGauge,
   },
-  {
-    name: "Consultoria",
-    description: "Dashboards de inteligência de mercado e performance comercial.",
-    path: "/app/setor/consultoria",
-    icon: Building2,
+  "/app/setor/agroeconomics/financeiro": {
+    description: "Consulte números financeiros, margens e resultados.",
+    icon: Wallet,
   },
-  {
-    name: "Comunicação",
-    description: "Campanhas, branding e comunicação institucional.",
-    path: "/app/setor/comunicacao",
-    icon: Megaphone,
+  "/app/relatorios": {
+    description: "Abra os relatórios compartilhados disponíveis no portal.",
+    icon: FileText,
   },
-  {
-    name: "Desenvolvimento e Inovação",
-    description: "Iniciativas, experimentação e P&D.",
-    path: "/app/setor/desenvolvimento-inovacao",
-    icon: FlaskConical,
-  },
-  {
-    name: "Financeiro",
-    description: "Visão financeira, margens, custos e KPIs.",
-    path: "/app/financeiro",
-    icon: PiggyBank,
-  },
-  {
-    name: "Levantamento de Safra",
-    description: "Produção, produtividade e estimativas de safra.",
-    path: "/app/setor/levantamento-safra",
-    icon: Sprout,
-  },
-  {
-    name: "Projetos",
-    description: "Portfólio, pipeline e execução de projetos.",
-    path: "/app/setor/projetos",
-    icon: FolderKanban,
-  },
-];
+};
+
+const toStaticMenuItems = () =>
+  ensureReportsLast(
+    getBaseMenuItemsBySector(HOME_MENU_SECTOR).map((item) => ({
+      ...item,
+      id: item.path,
+      isCustom: false,
+    })),
+  );
+
+const ensureReportsLast = <T extends { path: string }>(items: T[]) => {
+  const reports = items.filter((item) => item.path === REPORTS_PATH);
+  const rest = items.filter((item) => item.path !== REPORTS_PATH);
+  return [...rest, ...reports];
+};
+
+const buildHomeMenuItems = async (): Promise<SidebarMenuItem[]> => {
+  const baseItems = getBaseMenuItemsBySector(HOME_MENU_SECTOR);
+  const fallbackItems = baseItems.map((item) => ({
+    ...item,
+    id: item.path,
+    isCustom: false,
+  }));
+
+  try {
+    const { customItems, hiddenPaths, renamedTitles, descriptions } = await fetchSidebarItemsForSector(HOME_MENU_SECTOR);
+    const visibleBase = baseItems
+      .filter((item) => !hiddenPaths.has(item.path))
+      .map((item) => ({
+        ...item,
+        id: item.path,
+        title: renamedTitles.get(item.path) || item.title,
+        description: descriptions.get(item.path),
+        isCustom: false,
+      }));
+
+    return ensureReportsLast([...visibleBase, ...customItems]);
+  } catch (error) {
+    console.error("Erro ao carregar itens da home", error);
+    return fallbackItems;
+  }
+};
+
+const getHomeCardMeta = (item: SidebarMenuItem) => {
+  const knownConfig = HOME_CARD_CONFIG[item.path];
+  if (item.description?.trim()) {
+    return {
+      description: item.description.trim(),
+      icon: knownConfig?.icon ?? (item.isCustom ? BookOpenText : FileText),
+    };
+  }
+
+  if (knownConfig) return knownConfig;
+
+  if (item.powerBiKey?.endsWith("-comercial")) {
+    return {
+      description: "Acesse este painel comercial diretamente pela home.",
+      icon: BarChart3,
+    };
+  }
+
+  if (item.powerBiKey?.endsWith("-operacional")) {
+    return {
+      description: "Acesse este painel operacional diretamente pela home.",
+      icon: CircleGauge,
+    };
+  }
+
+  if (item.powerBiKey?.endsWith("-financeiro")) {
+    return {
+      description: "Acesse este painel financeiro diretamente pela home.",
+      icon: Wallet,
+    };
+  }
+
+  return {
+    description: item.isCustom
+      ? "Item personalizado do menu AgroEconomics disponível para navegação rápida."
+      : "Item do menu AgroEconomics disponível para navegação rápida.",
+    icon: item.isCustom ? BookOpenText : FileText,
+  };
+};
 
 const AppLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isBasePath = location.pathname === "/app" || location.pathname === "/app/";
+  const isAgroeconomicsOptionPath =
+    location.pathname === "/app/setor/agroeconomics" || location.pathname.startsWith("/app/setor/agroeconomics/");
+  const isReportsPath = location.pathname.startsWith("/app/relatorios");
+  const isHomeManagementPath = location.pathname === "/app/itens-sidebar" || location.pathname === "/app/powerbi";
+  const isProfilePath = location.pathname === "/app/perfil";
+  const hideSidebar = isBasePath || isAgroeconomicsOptionPath || isReportsPath || isHomeManagementPath || isProfilePath;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [homeItems, setHomeItems] = useState<SidebarMenuItem[]>(() => toStaticMenuItems());
+  const homeCards = useMemo(
+    () =>
+      homeItems.map((item) => ({
+        ...item,
+        ...getHomeCardMeta(item),
+      })),
+    [homeItems],
+  );
+  const powerBiCards = useMemo(
+    () => homeCards.filter((item) => item.path !== REPORTS_PATH),
+    [homeCards],
+  );
+  const reportCards = useMemo(
+    () => homeCards.filter((item) => item.path === REPORTS_PATH),
+    [homeCards],
+  );
 
   useEffect(() => {
     if (!isBasePath) return;
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -194,10 +279,38 @@ const AppLayout = () => {
     };
   }, [isBasePath]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadHomeItems = async () => {
+      const items = await buildHomeMenuItems();
+      if (isActive) {
+        setHomeItems(items);
+      }
+    };
+
+    if (isBasePath) {
+      void loadHomeItems();
+    }
+
+    const handleSidebarItemsUpdate = () => {
+      if (isBasePath) {
+        void loadHomeItems();
+      }
+    };
+
+    window.addEventListener(SIDEBAR_ITEMS_EVENT, handleSidebarItemsUpdate);
+
+    return () => {
+      isActive = false;
+      window.removeEventListener(SIDEBAR_ITEMS_EVENT, handleSidebarItemsUpdate);
+    };
+  }, [isBasePath]);
+
   return (
     <div className="min-h-screen flex w-full bg-background">
-      {!isBasePath && <Sidebar />}
-      <main className={`flex-1 min-h-0 overflow-hidden ${!isBasePath ? 'p-4 md:p-6 bg-background/40' : ''}`}>
+      {!hideSidebar && <Sidebar />}
+      <main className={`flex-1 min-h-0 overflow-hidden ${!isBasePath ? "p-4 md:p-6 bg-background/40" : ""}`}>
         {isBasePath ? (
           <div 
             className="relative flex h-full items-center justify-center overflow-hidden"
@@ -206,43 +319,115 @@ const AppLayout = () => {
             }}
           >
             <canvas ref={canvasRef} className="absolute inset-0 h-full w-full z-0 pointer-events-none" aria-hidden="true" />
+            <div className="absolute right-4 top-4 z-30">
+              <UserMenu variant="home" />
+            </div>
             
             <div className="relative z-20 w-full max-w-6xl px-4">
-              <div className="mb-8 space-y-3 text-center text-white">
-                <h1 className="text-4xl font-bold">Escolha o setor para continuar</h1>
+              <div className="mb-8 text-center text-white">
+                <p className="text-sm uppercase tracking-[0.45em] text-[#D7FFF1]/75">Portal</p>
+                <h1 className="mt-3 text-5xl font-bold tracking-tight text-[#F4FFF9] drop-shadow-[0_10px_30px_rgba(6,14,32,0.4)]">
+                  AgroEconomics
+                </h1>
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {sectors.map((sector) => {
-                  const Icon = sector.icon;
-                  return (
-                    <button
-                      key={sector.path}
-                      onClick={() => navigate(sector.path)}
-                      style={{
-                        background: "linear-gradient(140deg, rgba(32, 41, 86, 0.45) 0%, rgba(26, 68, 95, 0.38) 45%, rgba(0, 135, 71, 0.2) 100%)",
-                        borderColor: "rgba(120, 255, 210, 0.18)",
-                        boxShadow: "0 25px 80px rgba(6, 14, 32, 0.6)"
-                      }}
-                      className="group relative w-full rounded-xl border backdrop-blur-xl p-6 text-left transition-all hover:-translate-y-1 hover:border-[#78FFD2]/40 hover:shadow-[0_8px_32px_rgba(120,255,210,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78FFD2]/60"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-[#78FFD2]/15 text-[#78FFD2] group-hover:bg-[#78FFD2]/25 transition-colors">
-                          <Icon className="h-7 w-7" />
-                        </div>
-                        <div>
-                          <p className="text-xl font-semibold text-white mb-1">{sector.name}</p>
-                          <p className="text-sm text-[#D7FFF1]/70">{sector.description}</p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="space-y-8">
+                {powerBiCards.length > 0 && (
+                  <section className="space-y-4">
+                    <div className="space-y-1 text-white">
+                      <h2 className="text-2xl font-semibold">Power BI</h2>
+                      <p className="text-sm text-[#D7FFF1]/75">
+                        Painéis e visões analíticas disponíveis na home principal.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                      {powerBiCards.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => navigate(item.path)}
+                            style={{
+                              background: "linear-gradient(140deg, rgba(32, 41, 86, 0.45) 0%, rgba(26, 68, 95, 0.38) 45%, rgba(0, 135, 71, 0.2) 100%)",
+                              borderColor: "rgba(120, 255, 210, 0.18)",
+                              boxShadow: "0 25px 80px rgba(6, 14, 32, 0.6)"
+                            }}
+                            className="group relative w-full rounded-xl border p-6 text-left backdrop-blur-xl transition-all hover:-translate-y-1 hover:border-[#78FFD2]/40 hover:shadow-[0_8px_32px_rgba(120,255,210,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78FFD2]/60"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-[#78FFD2]/15 text-[#78FFD2] transition-colors group-hover:bg-[#78FFD2]/25">
+                                <Icon className="h-7 w-7" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="mb-1 text-xl font-semibold text-white">{item.title}</p>
+                                <p className="text-sm text-[#D7FFF1]/70">{item.description}</p>
+                              </div>
+                              <ArrowRight className="h-5 w-5 text-[#78FFD2] transition-transform group-hover:translate-x-1" />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
+
+                {reportCards.length > 0 && (
+                  <section className="space-y-4">
+                    <div className="space-y-1 text-white">
+                      <h2 className="text-2xl font-semibold">Relatórios</h2>
+                      <p className="text-sm text-[#D7FFF1]/75">
+                        Acesse os PDFs e materiais publicados para consulta.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                      {reportCards.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => navigate(item.path)}
+                            style={{
+                              background: "linear-gradient(140deg, rgba(32, 41, 86, 0.45) 0%, rgba(26, 68, 95, 0.38) 45%, rgba(0, 135, 71, 0.2) 100%)",
+                              borderColor: "rgba(120, 255, 210, 0.18)",
+                              boxShadow: "0 25px 80px rgba(6, 14, 32, 0.6)"
+                            }}
+                            className="group relative w-full rounded-xl border p-6 text-left backdrop-blur-xl transition-all hover:-translate-y-1 hover:border-[#78FFD2]/40 hover:shadow-[0_8px_32px_rgba(120,255,210,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78FFD2]/60"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-[#78FFD2]/15 text-[#78FFD2] transition-colors group-hover:bg-[#78FFD2]/25">
+                                <Icon className="h-7 w-7" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="mb-1 text-xl font-semibold text-white">{item.title}</p>
+                                <p className="text-sm text-[#D7FFF1]/70">{item.description}</p>
+                              </div>
+                              <ArrowRight className="h-5 w-5 text-[#78FFD2] transition-transform group-hover:translate-x-1" />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
               </div>
             </div>
           </div>
         ) : (
-          <div className="flex h-full min-h-0 w-full overflow-hidden">
-            <Outlet />
+          <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <Outlet />
+            </div>
+            {hideSidebar && (
+              <div className="mt-4 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => navigate("/app")}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-card/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Voltar ao início
+                </button>
+              </div>
+            )}
           </div>
         )}
       </main>

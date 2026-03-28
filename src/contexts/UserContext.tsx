@@ -1,22 +1,27 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, ReactNode } from "react";
 
-interface User {
+export type UserRole = "admin" | "client";
+
+export interface AppUser {
   firstName: string;
   lastName: string;
   email: string;
+  login: string;
+  role: UserRole;
+  allowedSectors: string[];
 }
 
 interface UserContextType {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: AppUser | null;
+  setUser: (user: AppUser | null) => void;
   logout: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
 
   const logout = () => {
     setUser(null);

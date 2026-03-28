@@ -6,6 +6,7 @@ export type SidebarCustomItem = {
   title: string;
   path: string;
   sector: string;
+  description?: string;
   powerBiUrl?: string;
 };
 
@@ -13,6 +14,8 @@ export type SidebarMenuItem = {
   id: string;
   title: string;
   path: string;
+  description?: string;
+  powerBiUrl?: string;
   powerBiKey?: PowerBiSection;
   isCustom: boolean;
   isProtected?: boolean;
@@ -31,6 +34,24 @@ type SidebarDbItem = {
 };
 
 const nowIso = () => new Date().toISOString();
+
+const formatSidebarItemsErrorMessage = (message: string) => {
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes('relation "sidebar_items" does not exist') || normalized.includes('relation "public.sidebar_items" does not exist')) {
+    return "A tabela sidebar_items não existe no Supabase. É preciso criar essa tabela no banco.";
+  }
+
+  if (normalized.includes("invalid input syntax for type uuid")) {
+    return "A coluna id da tabela sidebar_items está como UUID, mas a aplicação precisa que ela seja TEXT.";
+  }
+
+  if (normalized.includes("row-level security") || normalized.includes("permission denied")) {
+    return "O Supabase está bloqueando acesso à tabela sidebar_items. Revise as policies/permissões.";
+  }
+
+  return message;
+};
 
 const sanitizePowerBiValue = (value: string) => {
   const trimmed = value.trim();
@@ -72,12 +93,14 @@ export const createSidebarItemId = () => {
 export const buildCustomItemPath = (sector: string, id: string) => `/app/setor/${sector}/custom/${id}`;
 
 export const buildHiddenItemId = (sector: string, path: string) => `hidden:${sector}:${path}`;
+export const buildDescriptionItemId = (sector: string, path: string) => `description:${sector}:${path}`;
 
-const mapToCustomItem = (item: SidebarDbItem): SidebarCustomItem => ({
+const mapToCustomItem = (item: SidebarDbItem, description?: string): SidebarCustomItem => ({
   id: item.id,
   title: item.title,
   path: item.path,
   sector: item.sector,
+  description,
   powerBiUrl: item.powerbi_url ?? "",
 });
 
@@ -88,7 +111,7 @@ export const fetchSidebarItemsBySector = async (sector: string): Promise<Sidebar
     .eq("sector", sector)
     .order("created_at", { ascending: true });
   if (error) {
-    throw new Error(error.message);
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
   }
   return data ?? [];
 };
@@ -108,16 +131,26 @@ export const fetchSidebarItemById = async (id: string, sector?: string): Promise
   const { data, error } = await query.maybeSingle();
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
   }
 
-  return data ? mapToCustomItem(data) : null;
+  if (!data) return null;
+
+  const items = sector ? await fetchSidebarItemsBySector(sector) : [];
+  const descriptions = new Map(
+    items
+      .filter((item) => !item.is_custom && !item.is_hidden && item.id.startsWith("description:"))
+      .map((item) => [item.path, item.title]),
+  );
+
+  return mapToCustomItem(data, descriptions.get(data.path));
 };
 
 export const fetchSidebarItemsForSector = async (sector: string): Promise<{
   customItems: SidebarMenuItem[];
   hiddenPaths: Set<string>;
   renamedTitles: Map<string, string>;
+  descriptions: Map<string, string>;
 }> => {
   const items = await fetchSidebarItemsBySector(sector);
   const hiddenPaths = new Set(
@@ -129,6 +162,12 @@ export const fetchSidebarItemsForSector = async (sector: string): Promise<{
       .filter((item) => !item.is_custom && !item.is_hidden && item.id.startsWith("renamed:"))
       .map((item) => [item.path, item.title])
   );
+
+  const descriptions = new Map(
+    items
+      .filter((item) => !item.is_custom && !item.is_hidden && item.id.startsWith("description:"))
+      .map((item) => [item.path, item.title]),
+  );
   
   const customItems = items
     .filter((item) => item.is_custom && !item.is_hidden)
@@ -136,10 +175,12 @@ export const fetchSidebarItemsForSector = async (sector: string): Promise<{
       id: item.id,
       title: item.title,
       path: item.path,
+      description: descriptions.get(item.path),
+      powerBiUrl: item.powerbi_url ?? "",
       isCustom: true,
     }));
 
-  return { customItems, hiddenPaths, renamedTitles };
+  return { customItems, hiddenPaths, renamedTitles, descriptions };
 };
 
 export const insertCustomSidebarItem = async (params: { sector: string; title: string }): Promise<SidebarCustomItem> => {
@@ -163,7 +204,7 @@ export const insertCustomSidebarItem = async (params: { sector: string; title: s
     .maybeSingle();
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
   }
 
   if (!data) {
@@ -173,10 +214,49 @@ export const insertCustomSidebarItem = async (params: { sector: string; title: s
   return mapToCustomItem(data);
 };
 
+export const createPowerBiSidebarItem = async (params: {
+  sector: string;
+  title: string;
+  description?: string;
+  url?: string;
+}): Promise<SidebarCustomItem> => {
+  const createdItem = await insertCustomSidebarItem({ sector: params.sector, title: params.title });
+
+  try {
+    if (params.url?.trim()) {
+      await updateSidebarItemLink(createdItem.id, params.url);
+    }
+    if (params.description?.trim()) {
+      await upsertSidebarItemDescription({
+        sector: params.sector,
+        path: createdItem.path,
+        description: params.description,
+      });
+    }
+  } catch (error) {
+    await deleteSidebarItem(createdItem.id).catch(() => undefined);
+    throw error;
+  }
+
+  return {
+    ...createdItem,
+    description: params.description?.trim(),
+    powerBiUrl: params.url?.trim() ? sanitizePowerBiValue(params.url) : "",
+  };
+};
+
 export const deleteSidebarItem = async (id: string) => {
   const { error } = await supabase.from("sidebar_items").delete().eq("id", id);
   if (error) {
-    throw new Error(error.message);
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
+  }
+};
+
+export const deleteSidebarItemWithMetadata = async (params: { id: string; sector: string; path: string }) => {
+  const ids = [params.id, buildDescriptionItemId(params.sector, params.path)];
+  const { error } = await supabase.from("sidebar_items").delete().in("id", ids);
+  if (error) {
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
   }
 };
 
@@ -189,7 +269,7 @@ export const updateSidebarItemLink = async (id: string, url: string) => {
     .eq("is_custom", true);
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
   }
 
   return safeUrl;
@@ -208,10 +288,42 @@ export const updateSidebarItemTitle = async (id: string, title: string) => {
     .eq("is_custom", true);
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
   }
 
   return trimmedTitle;
+};
+
+export const upsertSidebarItemDescription = async (params: { sector: string; path: string; description: string }) => {
+  const trimmedDescription = params.description.trim();
+  const id = buildDescriptionItemId(params.sector, params.path);
+
+  if (!trimmedDescription) {
+    const { error } = await supabase.from("sidebar_items").delete().eq("id", id);
+    if (error) {
+      throw new Error(formatSidebarItemsErrorMessage(error.message));
+    }
+    return "";
+  }
+
+  const now = nowIso();
+  const payload: SidebarDbItem = {
+    id,
+    sector: params.sector,
+    title: trimmedDescription,
+    path: params.path,
+    is_custom: false,
+    is_hidden: false,
+    created_at: now,
+    updated_at: now,
+  };
+
+  const { error } = await supabase.from<SidebarDbItem>("sidebar_items").upsert(payload, { onConflict: "id" });
+  if (error) {
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
+  }
+
+  return trimmedDescription;
 };
 
 export const updateBaseItemTitle = async (params: { sector: string; path: string; newTitle: string }) => {
@@ -231,7 +343,7 @@ export const updateBaseItemTitle = async (params: { sector: string; path: string
 
   const { error } = await supabase.from<SidebarDbItem>("sidebar_items").upsert(payload, { onConflict: "id" });
   if (error) {
-    throw new Error(error.message);
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
   }
 
   return params.newTitle.trim();
@@ -252,6 +364,13 @@ export const hideBuiltInSidebarItem = async (params: { sector: string; title: st
 
   const { error } = await supabase.from<SidebarDbItem>("sidebar_items").upsert(payload, { onConflict: "id" });
   if (error) {
-    throw new Error(error.message);
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
+  }
+};
+
+export const restoreBuiltInSidebarItem = async (params: { sector: string; path: string }) => {
+  const { error } = await supabase.from("sidebar_items").delete().eq("id", buildHiddenItemId(params.sector, params.path));
+  if (error) {
+    throw new Error(formatSidebarItemsErrorMessage(error.message));
   }
 };

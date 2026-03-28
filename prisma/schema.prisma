@@ -44,3 +44,19 @@ model PowerBiLink {
   @@index([panel])
   @@map("powerbi_links")
 }
+
+model SidebarItem {
+  id         String   @id
+  title      String
+  path       String
+  sector     String
+  isCustom   Boolean  @default(false) @map("is_custom")
+  isHidden   Boolean  @default(false) @map("is_hidden")
+  powerBiUrl String?  @map("powerbi_url")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([sector])
+  @@index([sector, path])
+  @@map("sidebar_items")
+}

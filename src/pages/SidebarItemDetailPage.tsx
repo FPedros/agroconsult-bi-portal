@@ -48,7 +48,7 @@ const SidebarItemDetailPage = () => {
     return () => {
       isActive = false;
     };
-  }, [itemId]);
+  }, [itemId, sectorId]);
 
   const title = item?.title ?? "Item da sidebar";
   const showFrame = !loading && !error && Boolean(item?.powerBiUrl);
@@ -68,7 +68,9 @@ const SidebarItemDetailPage = () => {
             <div className="space-y-4">
               <p>Nenhum link do Power BI configurado.</p>
               <Button asChild>
-                <Link to="/app/powerbi" state={{ selectedItemId: item?.id, selectedItemTitle: item?.title }}>Inserir Power BI</Link>
+                <Link to="/app/itens-sidebar" state={{ selectedItemId: item?.id, selectedItemTitle: item?.title }}>
+                  Gerenciar item da home
+                </Link>
               </Button>
             </div>
           ) : (
