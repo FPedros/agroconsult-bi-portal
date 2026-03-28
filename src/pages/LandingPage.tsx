@@ -26,41 +26,10 @@ const LandingPage = () => {
 
   const handleEntrar = (e: React.FormEvent) => {
     e.preventDefault();
-<<<<<<< HEAD
-    const normalizedEmail = email.trim().toLowerCase();
-    const isValidUser =
-      (normalizedEmail === "teste@agroconsult.com.br" && (senha === "1234" || senha === "Agro#2025!")) ||
-      (normalizedEmail === "nicole.heuko" && senha === "N8!q2Lm4") ||
-      (normalizedEmail === "pedro.takashi" && senha === "T5@v9Xr1");
-
-    if (isValidUser) {
-      let userData;
-      if (normalizedEmail === "teste@agroconsult.com.br") {
-        userData = {
-          firstName: "Teste",
-          lastName: "Agroconsult",
-          email: "teste@agroconsult.com.br",
-        };
-      } else if (normalizedEmail === "nicole.heuko") {
-        userData = {
-          firstName: "Nicole",
-          lastName: "Heuko",
-          email: "nicole.heuko@agroconsult.com.br",
-        };
-      } else if (normalizedEmail === "pedro.takashi") {
-        userData = {
-          firstName: "Pedro",
-          lastName: "Takashi",
-          email: "pedro.takashi@agroconsult.com.br",
-        };
-      }
-      setUser(userData);
-=======
     const authenticatedUser = authenticateMvpUser(login, senha);
 
     if (authenticatedUser) {
       setUser(authenticatedUser);
->>>>>>> 52fa473 (tst)
       setError("");
       navigate(getUserDefaultSectorPath(authenticatedUser));
       return;
@@ -200,17 +169,6 @@ const LandingPage = () => {
 
             <form onSubmit={handleEntrar} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-<<<<<<< HEAD
-                <label htmlFor="inpEmail" className="text-sm font-medium text-white/90">
-                  Usuário ou E-mail
-                </label>
-                <Input
-                  id="inpEmail"
-                  type="text"
-                  placeholder="usuario ou seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-=======
                 <label htmlFor="inpLogin" className="text-sm font-medium text-white/90">
                   Login
                 </label>
@@ -220,7 +178,6 @@ const LandingPage = () => {
                   placeholder="seu.login"
                   value={login}
                   onChange={(e) => setLogin(e.target.value)}
->>>>>>> 52fa473 (tst)
                   className="bg-white/5 border-white/15 text-white placeholder:text-white/45 focus:ring-[#78FFD2]/60 focus:border-[#78FFD2]/40"
                   required
                 />
