@@ -2,11 +2,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import {
   Building2,
-  ClipboardList,
-  Sprout,
-  FolderKanban,
-  PiggyBank,
-  FlaskConical,
+  Leaf,
   Globe2,
   Megaphone,
 } from "lucide-react";
@@ -30,46 +26,16 @@ const sectors = [
     icon: Globe2,
   },
   {
-    name: "Avaliação de Ativos",
-    description: "Valuation, análise patrimonial e ativos estratégicos.",
-    path: "/app/setor/avaliacao-ativos",
-    icon: ClipboardList,
-  },
-  {
     name: "Consultoria",
     description: "Dashboards de inteligência de mercado e performance comercial.",
     path: "/app/setor/consultoria",
     icon: Building2,
   },
   {
-    name: "Comunicação",
-    description: "Campanhas, branding e comunicação institucional.",
-    path: "/app/setor/comunicacao",
-    icon: Megaphone,
-  },
-  {
-    name: "Desenvolvimento e Inovação",
-    description: "Iniciativas, experimentação e P&D.",
-    path: "/app/setor/desenvolvimento-inovacao",
-    icon: FlaskConical,
-  },
-  {
-    name: "Financeiro",
-    description: "Visão financeira, margens, custos e KPIs.",
-    path: "/app/financeiro",
-    icon: PiggyBank,
-  },
-  {
-    name: "Levantamento de Safra",
-    description: "Produção, produtividade e estimativas de safra.",
-    path: "/app/setor/levantamento-safra",
-    icon: Sprout,
-  },
-  {
-    name: "Projetos",
-    description: "Portfólio, pipeline e execução de projetos.",
-    path: "/app/setor/projetos",
-    icon: FolderKanban,
+    name: "Fertilizantes & Sucroenergético",
+    description: "Análises de fertilizantes, biocombustíveis e energias renováveis.",
+    path: "/app/setor/fertilizantes-sucroenergético",
+    icon: Leaf,
   },
 ];
 

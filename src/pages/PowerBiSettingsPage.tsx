@@ -37,7 +37,10 @@ const PowerBiSettingsPage = () => {
   const [itemsError, setItemsError] = useState("");
   const [isItemsLoading, setIsItemsLoading] = useState(false);
 
-  const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
+  const currentSector = useMemo(
+    () => getSectorFromPath(location.pathname, location.search),
+    [location.pathname, location.search],
+  );
 
   useEffect(() => {
     let isActive = true;

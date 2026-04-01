@@ -11,7 +11,7 @@ import {
   SIDEBAR_ITEMS_EVENT,
   type SidebarMenuItem,
 } from "@/lib/sidebarItems";
-import { getBaseMenuItemsBySector, getSectorFromPath, sectorIcons, sectorLabels } from "@/lib/sidebarMenu";
+import { buildSectorScopedPath, getBaseMenuItemsBySector, getSectorFromPath, sectorIcons, sectorLabels } from "@/lib/sidebarMenu";
 
 const REPORTS_PATH = "/app/relatorios";
 const PROTECTED_PATHS = new Set([REPORTS_PATH]);
@@ -30,7 +30,10 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [menuItems, setMenuItems] = useState<SidebarMenuItem[]>([]);
 
-  const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
+  const currentSector = useMemo(
+    () => getSectorFromPath(location.pathname, location.search),
+    [location.pathname, location.search],
+  );
   const sectorLabel = sectorLabels[currentSector] ?? "Setor";
   const SectorIcon = sectorIcons[currentSector] ?? Leaf;
 
@@ -120,6 +123,7 @@ const Sidebar = () => {
       <nav className={cn("flex-1 p-4", isCollapsed && "px-2")}>
         <div className="space-y-2">
           {menuItems.map((item) => {
+            const itemTarget = isProtectedPath(item.path) ? buildSectorScopedPath(item.path, currentSector) : item.path;
             const collapsedLabel = item.title
               .split(" ")
               .filter(Boolean)
@@ -130,7 +134,7 @@ const Sidebar = () => {
             return (
               <NavLink
                 key={item.id}
-                to={item.path}
+                to={itemTarget}
                 title={isCollapsed ? item.title : undefined}
                 className={cn(
                   "flex items-center rounded-lg px-4 py-3 text-sidebar-foreground transition-all duration-200 hover:bg-sidebar-accent",
@@ -171,7 +175,7 @@ const Sidebar = () => {
           <ChevronLeft className="h-4 w-4" />
           {!isCollapsed && <span className="text-sm font-medium">Escolher outro setor</span>}
         </Button>
-        <UserMenu collapsed={isCollapsed} />
+        <UserMenu collapsed={isCollapsed} currentSector={currentSector} />
       </div>
     </aside>
   );

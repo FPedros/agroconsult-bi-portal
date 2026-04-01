@@ -1,13 +1,8 @@
 import {
   type LucideIcon,
-  ClipboardList,
-  FlaskConical,
-  Globe2,
   Building2,
-  PiggyBank,
-  Sprout,
-  FolderKanban,
-  Megaphone,
+  Globe2,
+  Leaf,
 } from "lucide-react";
 import { type PowerBiSection } from "@/contexts/PowerBiContext";
 
@@ -29,44 +24,44 @@ const sectorMenus: Record<string, BaseMenuItem[]> = {
       powerBiKey: "consultoria-financeiro",
     },
   ],
-  financeiro: [{ title: "Painel Financeiro", path: "/app/financeiro", powerBiKey: "financeiro-principal" }],
-  "avaliacao-ativos": [
-    {
-      title: "Avaliação de Ativos",
-      path: "/app/setor/avaliacao-ativos",
-      powerBiKey: "avaliacao-ativos",
-    },
+  agroeconomics: [
+    { title: "Comercial", path: "/app/setor/agroeconomics/comercial" },
+    { title: "Operacional", path: "/app/setor/agroeconomics/operacional" },
+    { title: "Financeiro", path: "/app/setor/agroeconomics/financeiro" },
   ],
-  comunicacao: [{ title: "Comunicação", path: "/app/setor/comunicacao" }],
-  "levantamento-safra": [{ title: "Levantamento de Safra", path: "/app/setor/levantamento-safra" }],
-  projetos: [{ title: "Projetos", path: "/app/setor/projetos" }],
-  "desenvolvimento-inovacao": [{ title: "Desenvolvimento e Inovação", path: "/app/setor/desenvolvimento-inovacao" }],
-  agroeconomics: [{ title: "AgroEconomics", path: "/app/setor/agroeconomics" }],
+  "fertilizantes-sucroenergético": [
+    { title: "Painel Fertilizantes", path: "/app/setor/fertilizantes-sucroenergético/fertilizantes" },
+    { title: "Painel Sucroenergético", path: "/app/setor/fertilizantes-sucroenergético/sucroenergético" },
+  ],
 };
 
 export const sectorLabels: Record<string, string> = {
   consultoria: "Consultoria",
-  financeiro: "Financeiro",
-  "avaliacao-ativos": "Avaliação de Ativos",
-  comunicacao: "Comunicação",
-  "levantamento-safra": "Levantamento de Safra",
-  projetos: "Projetos",
-  "desenvolvimento-inovacao": "Desenvolvimento e Inovação",
   agroeconomics: "AgroEconomics",
+  "fertilizantes-sucroenergético": "Fertilizantes & Sucroenergético",
 };
 
 export const sectorIcons: Record<string, LucideIcon> = {
   consultoria: Building2,
-  financeiro: PiggyBank,
-  "avaliacao-ativos": ClipboardList,
-  comunicacao: Megaphone,
-  "levantamento-safra": Sprout,
-  projetos: FolderKanban,
-  "desenvolvimento-inovacao": FlaskConical,
   agroeconomics: Globe2,
+  "fertilizantes-sucroenergético": Leaf,
 };
 
 const LAST_SECTOR_STORAGE_KEY = "current-sector";
+
+const decodePathSegment = (value: string) => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
+const normalizeSector = (value?: string | null) => {
+  if (!value) return null;
+  const normalized = decodePathSegment(value).trim();
+  return normalized && sectorMenus[normalized] ? normalized : null;
+};
 
 const readStoredSector = () => {
   if (typeof window === "undefined") return null;
@@ -88,29 +83,50 @@ const persistSector = (sector: string) => {
   }
 };
 
-export const getSectorFromPath = (pathname: string) => {
-  const parts = pathname.split("/").filter(Boolean);
+export const buildSectorScopedPath = (path: string, sector: string) => {
+  const normalizedSector = normalizeSector(sector);
+  if (!normalizedSector) return path;
+
+  const [pathAndSearch, hash = ""] = path.split("#");
+  const [basePath, existingSearch = ""] = pathAndSearch.split("?");
+  const params = new URLSearchParams(existingSearch);
+  params.set("sector", normalizedSector);
+  const nextSearch = params.toString();
+
+  return `${basePath}${nextSearch ? `?${nextSearch}` : ""}${hash ? `#${hash}` : ""}`;
+};
+
+export const getSectorFromPath = (pathname: string, search = "") => {
+  const explicitSector = normalizeSector(new URLSearchParams(search).get("sector"));
+  if (explicitSector) {
+    persistSector(explicitSector);
+    return explicitSector;
+  }
+
+  const parts = pathname
+    .split("/")
+    .filter(Boolean)
+    .map(decodePathSegment);
   if (parts[0] !== "app") return "consultoria";
   const first = parts[1];
   if (first === "setor") {
-    const sector = parts[2] || "consultoria";
-    if (sectorMenus[sector]) persistSector(sector);
-    return sectorMenus[sector] ? sector : readStoredSector() || "consultoria";
+    const sector = normalizeSector(parts[2]);
+    if (sector) {
+      persistSector(sector);
+      return sector;
+    }
+    return "consultoria";
   }
-  if (first === "comercial" || first === "operacional") {
+  if (first === "itens-sidebar" || first === "relatorios" || first === "powerbi" || first === "perfil") {
+    // Quando estiver na página de gerenciamento de sidebar, relatórios, PowerBI ou perfil, usar o setor salvo
+    return readStoredSector() || "consultoria";
+  }
+  if (first === "comercial" || first === "operacional" || first === "consultoria") {
     persistSector("consultoria");
     return "consultoria";
   }
-  if (first === "financeiro") {
-    persistSector("financeiro");
-    return "financeiro";
-  }
-  if (sectorMenus[first]) {
-    persistSector(first);
-    return first;
-  }
-
-  return readStoredSector() || "consultoria";
+  
+  return "consultoria";
 };
 
 const standardPanelsForSector = (sector: string): BaseMenuItem[] => [
@@ -132,22 +148,13 @@ const standardPanelsForSector = (sector: string): BaseMenuItem[] => [
 ];
 
 export const getBaseMenuItemsBySector = (sector: string): BaseMenuItem[] => {
-  const existingItems = sectorMenus[sector] ?? sectorMenus.consultoria;
-  const sectorLabel = sectorLabels[sector]?.toLowerCase();
-  const filteredExisting = sectorLabel
-    ? existingItems.filter((item) => item.title.toLowerCase() !== sectorLabel)
-    : existingItems;
-
-  const existingTitles = new Set(filteredExisting.map((item) => item.title.toLowerCase()));
-  const extras = standardPanelsForSector(sector).filter((panel) => !existingTitles.has(panel.title.toLowerCase()));
-
-  const merged = [...filteredExisting, ...extras, ...sharedMenuItems];
-  const seenPaths = new Set<string>();
-  return merged.filter((item) => {
-    if (seenPaths.has(item.path)) return false;
-    seenPaths.add(item.path);
-    return true;
-  });
+  const existingItems = sectorMenus[sector] ?? [];
+  
+  if (existingItems.length > 0) {
+    return [...existingItems, ...sharedMenuItems];
+  }
+  
+  return [...standardPanelsForSector(sector), ...sharedMenuItems];
 };
 
 export { sectorMenus };

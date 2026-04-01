@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
@@ -36,9 +37,20 @@ const formatSize = (size?: number) => {
 
 const formatName = (name: string) => name.replace(/^\d+-/, "").replace(/_/g, " ");
 
+const getInitials = (title: string) =>
+  title
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
 const RelatoriosPage = () => {
   const location = useLocation();
-  const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
+  const currentSector = useMemo(
+    () => getSectorFromPath(location.pathname, location.search),
+    [location.pathname, location.search],
+  );
   const sectorLabel = sectorLabels[currentSector] ?? "Setor";
   const [reports, setReports] = useState<ReportFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,12 +106,12 @@ const RelatoriosPage = () => {
   };
 
   const handleDelete = async (report: ReportFile) => {
-    const confirmation = window.confirm(`Deseja excluir o relatório "${formatName(report.name)}"?`);
+    const confirmation = window.confirm(`Deseja excluir o relatório "${report.title}"?`);
     if (!confirmation) return;
 
     setDeletingName(report.name);
     try {
-      await deleteReport(report.path);
+      await deleteReport(report);
       notifyReportsUpdated();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao excluir relatório.";
@@ -120,8 +132,8 @@ const RelatoriosPage = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Arquivos disponíveis</CardTitle>
-          <CardDescription>Selecione um relatório para abrir em nova guia.</CardDescription>
+          <CardTitle>Biblioteca do setor</CardTitle>
+          <CardDescription>Cards com capa, resumo e acesso direto ao PDF.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {loadError && <p className="text-sm text-red-500">{loadError}</p>}
@@ -134,39 +146,67 @@ const RelatoriosPage = () => {
               Nenhum relatório disponível para este setor.
             </div>
           ) : (
-            reports.map((report) => (
-              <div
-                key={report.name}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card/70 px-4 py-3"
-              >
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">{formatName(report.name)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Atualizado em {formatDate(report.updatedAt ?? report.createdAt)} • {formatSize(report.size)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleOpen(report)}
-                    disabled={openingName === report.name || deletingName === report.name}
-                  >
-                    {openingName === report.name ? "Abrindo..." : "Abrir"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(report)}
-                    disabled={deletingName === report.name || openingName === report.name}
-                  >
-                    {deletingName === report.name ? "Excluindo..." : "Excluir"}
-                  </Button>
-                </div>
-              </div>
-            ))
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {reports.map((report) => (
+                <article
+                  key={report.id}
+                  className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <div className="relative h-48 overflow-hidden border-b border-border bg-muted/30">
+                    {report.imageUrl ? (
+                      <img
+                        src={report.imageUrl}
+                        alt={report.title}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/15 via-primary/5 to-background text-4xl font-semibold text-primary/70">
+                        {getInitials(report.title || formatName(report.name))}
+                      </div>
+                    )}
+                    {report.isLegacy && (
+                      <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2 py-1 text-[11px] font-medium text-muted-foreground shadow-sm">
+                        Legado
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-4 p-5">
+                    <div className="space-y-2">
+                      <h3 className="line-clamp-2 text-lg font-semibold text-foreground">{report.title}</h3>
+                      <p className="line-clamp-3 min-h-[60px] text-sm text-muted-foreground">
+                        {report.description?.trim() || "Relatório em PDF disponível para consulta e download."}
+                      </p>
+                    </div>
+
+                    <div className="text-xs text-muted-foreground">
+                      Atualizado em {formatDate(report.updatedAt ?? report.createdAt)} • {formatSize(report.size)}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        className="flex-1"
+                        onClick={() => handleOpen(report)}
+                        disabled={openingName === report.name || deletingName === report.name}
+                      >
+                        {openingName === report.name ? "Abrindo..." : "Abrir PDF"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleDelete(report)}
+                        disabled={deletingName === report.name || openingName === report.name}
+                        aria-label={`Excluir ${report.title}`}
+                      >
+                        {deletingName === report.name ? "..." : <Trash2 className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

@@ -20,7 +20,10 @@ const PROTECTED_PATHS = new Set(["/app/relatorios"]);
 
 const SidebarItemsPage = () => {
   const location = useLocation();
-  const currentSector = useMemo(() => getSectorFromPath(location.pathname), [location.pathname]);
+  const currentSector = useMemo(
+    () => getSectorFromPath(location.pathname, location.search),
+    [location.pathname, location.search],
+  );
   const sectorLabel = sectorLabels[currentSector] ?? "Setor";
   const [items, setItems] = useState<SidebarMenuItem[]>([]);
   const [title, setTitle] = useState("");

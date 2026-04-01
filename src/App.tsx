@@ -73,6 +73,7 @@ const App = () => (
               <Route path="setor/avaliacao-ativos" element={<AvaliacaoAtivosPage />} />
               <Route path="setor/:sectorId" element={<SectorPage />} />
               <Route path="perfil" element={<PerfilPage />} />
+              <Route path="perfil/relatorios" element={<PerfilPage />} />
               <Route path="powerbi" element={<PowerBiSettingsPage />} />
               <Route path="itens-sidebar" element={<SidebarItemsPage />} />
               <Route path="relatorios" element={<RelatoriosPage />} />

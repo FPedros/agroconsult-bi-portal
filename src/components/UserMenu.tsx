@@ -11,12 +11,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { buildSectorScopedPath } from "@/lib/sidebarMenu";
 
 interface UserMenuProps {
   collapsed?: boolean;
+  currentSector: string;
 }
 
-const UserMenu = ({ collapsed = false }: UserMenuProps) => {
+const UserMenu = ({ collapsed = false, currentSector }: UserMenuProps) => {
   const { user, logout } = useUser();
   const navigate = useNavigate();
 
@@ -61,32 +63,32 @@ const UserMenu = ({ collapsed = false }: UserMenuProps) => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => navigate("/app/perfil")}
-          className="cursor-pointer"
-        >
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Gerenciar cadastro</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => navigate("/app/perfil#relatorios")}
+          onClick={() => navigate(buildSectorScopedPath("/app/perfil/relatorios", currentSector))}
           className="cursor-pointer"
         >
           <FileUp className="mr-2 h-4 w-4" />
           <span>Inserir relatório</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => navigate("/app/powerbi")}
+          onClick={() => navigate(buildSectorScopedPath("/app/powerbi", currentSector))}
           className="cursor-pointer"
         >
           <BarChart3 className="mr-2 h-4 w-4" />
           <span>Inserir Power BI</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => navigate("/app/itens-sidebar")}
+          onClick={() => navigate(buildSectorScopedPath("/app/itens-sidebar", currentSector))}
           className="cursor-pointer"
         >
           <ListPlus className="mr-2 h-4 w-4" />
           <span>Gerenciar itens da sidebar</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => navigate(buildSectorScopedPath("/app/perfil", currentSector))}
+          className="cursor-pointer"
+        >
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Gerenciar cadastro</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
