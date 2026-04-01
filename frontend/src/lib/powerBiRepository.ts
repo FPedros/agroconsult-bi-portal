@@ -33,14 +33,6 @@ const randomId = () => {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 };
 
-export async function fetchSectors(): Promise<Sector[]> {
-  const { data, error } = await supabase.from("sectors").select("*");
-  if (error) {
-    throw new Error(error.message);
-  }
-  return data ?? [];
-}
-
 export async function fetchSectorBySlug(slug: string): Promise<Sector | null> {
   const { data, error } = await supabase.from("sectors").select("*").eq("slug", slug).maybeSingle();
   if (error) {

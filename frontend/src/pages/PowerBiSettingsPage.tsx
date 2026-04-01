@@ -137,10 +137,6 @@ const PowerBiSettingsPage = () => {
       return { sectorSlug, panel: match };
     }
 
-    if (section === "avaliacao-ativos") {
-      return { sectorSlug: "avaliacao-ativos", panel: "principal" };
-    }
-
     return null;
   };
 

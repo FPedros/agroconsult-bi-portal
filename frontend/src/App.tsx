@@ -5,14 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { UserProvider, useUser } from "./contexts/UserContext";
-import { PowerBiProvider } from "./contexts/PowerBiContext";
 import LandingPage from "./pages/LandingPage";
 import AppLayout from "./pages/AppLayout";
-import ComercialPage from "./pages/ComercialPage";
-import OperacionalPage from "./pages/OperacionalPage";
-import FinanceiroPage from "./pages/FinanceiroPage";
-import AvaliacaoAtivosPage from "./pages/AvaliacaoAtivosPage";
-import ConsultoriaFinanceiroPage from "./pages/ConsultoriaFinanceiroPage";
 import PerfilPage from "./pages/PerfilPage";
 import PowerBiSettingsPage from "./pages/PowerBiSettingsPage";
 import RecuperarSenhaPage from "./pages/RecuperarSenhaPage";
@@ -54,23 +48,17 @@ const ProtectedAppLayout = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <UserProvider>
-      <PowerBiProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ThemeApplier />
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
-              <Route path="/app" element={<ProtectedAppLayout />}>
-                <Route path="comercial" element={<ComercialPage />} />
-                <Route path="operacional" element={<OperacionalPage />} />
-              <Route path="consultoria/financeiro" element={<ConsultoriaFinanceiroPage />} />
-              <Route path="financeiro" element={<FinanceiroPage />} />
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ThemeApplier />
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
+            <Route path="/app" element={<ProtectedAppLayout />}>
               <Route path="setor/:sectorId/custom/:itemId" element={<SidebarItemDetailPage />} />
               <Route path="setor/:sectorId/:panelId" element={<SectorPanelPage />} />
-              <Route path="setor/avaliacao-ativos" element={<AvaliacaoAtivosPage />} />
               <Route path="setor/:sectorId" element={<SectorPage />} />
               <Route path="perfil" element={<PerfilPage />} />
               <Route path="perfil/relatorios" element={<PerfilPage />} />
@@ -78,12 +66,10 @@ const App = () => (
               <Route path="itens-sidebar" element={<SidebarItemsPage />} />
               <Route path="relatorios" element={<RelatoriosPage />} />
             </Route>
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </PowerBiProvider>
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
     </UserProvider>
   </QueryClientProvider>
 );

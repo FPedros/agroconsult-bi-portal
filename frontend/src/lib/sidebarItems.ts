@@ -14,6 +14,7 @@ export type SidebarMenuItem = {
   title: string;
   path: string;
   powerBiKey?: PowerBiSection;
+  powerBiUrl?: string;
   isCustom: boolean;
   isProtected?: boolean;
 };
@@ -136,6 +137,7 @@ export const fetchSidebarItemsForSector = async (sector: string): Promise<{
       id: item.id,
       title: item.title,
       path: item.path,
+      powerBiUrl: item.powerbi_url ?? "",
       isCustom: true,
     }));
 

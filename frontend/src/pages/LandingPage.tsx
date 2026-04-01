@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUser } from "@/contexts/UserContext";
+import { authenticateLocalUser } from "@/lib/mockAuth";
 
 type NeuralNode = {
   x: number;
@@ -24,33 +25,9 @@ const LandingPage = () => {
 
   const handleEntrar = (e: React.FormEvent) => {
     e.preventDefault();
-    const normalizedEmail = email.trim().toLowerCase();
-    const isValidUser =
-      (normalizedEmail === "teste@agroconsult.com.br" && (senha === "1234" || senha === "Agro#2025!")) ||
-      (normalizedEmail === "nicole.heuko" && senha === "N8!q2Lm4") ||
-      (normalizedEmail === "pedro.takashi" && senha === "T5@v9Xr1");
+    const userData = authenticateLocalUser(email, senha);
 
-    if (isValidUser) {
-      let userData;
-      if (normalizedEmail === "teste@agroconsult.com.br") {
-        userData = {
-          firstName: "Teste",
-          lastName: "Agroconsult",
-          email: "teste@agroconsult.com.br",
-        };
-      } else if (normalizedEmail === "nicole.heuko") {
-        userData = {
-          firstName: "Nicole",
-          lastName: "Heuko",
-          email: "nicole.heuko@agroconsult.com.br",
-        };
-      } else if (normalizedEmail === "pedro.takashi") {
-        userData = {
-          firstName: "Pedro",
-          lastName: "Takashi",
-          email: "pedro.takashi@agroconsult.com.br",
-        };
-      }
+    if (userData) {
       setUser(userData);
       setError("");
       navigate("/app");

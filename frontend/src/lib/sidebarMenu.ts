@@ -16,11 +16,11 @@ const sharedMenuItems: BaseMenuItem[] = [{ title: "Relatórios", path: "/app/rel
 
 const sectorMenus: Record<string, BaseMenuItem[]> = {
   consultoria: [
-    { title: "Painel Comercial", path: "/app/comercial", powerBiKey: "consultoria-comercial" },
-    { title: "Painel Operacional", path: "/app/operacional", powerBiKey: "consultoria-operacional" },
+    { title: "Painel Comercial", path: "/app/setor/consultoria/comercial", powerBiKey: "consultoria-comercial" },
+    { title: "Painel Operacional", path: "/app/setor/consultoria/operacional", powerBiKey: "consultoria-operacional" },
     {
       title: "Painel Financeiro",
-      path: "/app/consultoria/financeiro",
+      path: "/app/setor/consultoria/financeiro",
       powerBiKey: "consultoria-financeiro",
     },
   ],
@@ -120,10 +120,6 @@ export const getSectorFromPath = (pathname: string, search = "") => {
   if (first === "itens-sidebar" || first === "relatorios" || first === "powerbi" || first === "perfil") {
     // Quando estiver na página de gerenciamento de sidebar, relatórios, PowerBI ou perfil, usar o setor salvo
     return readStoredSector() || "consultoria";
-  }
-  if (first === "comercial" || first === "operacional" || first === "consultoria") {
-    persistSector("consultoria");
-    return "consultoria";
   }
   
   return "consultoria";
